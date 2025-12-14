@@ -1,9 +1,10 @@
 import { NavLink } from "@/components/NavLink";
-import { LayoutDashboard, Building2, Settings, GraduationCap } from "lucide-react";
+import { LayoutDashboard, Building2, Settings, GraduationCap, Mail } from "lucide-react";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "All Companies", url: "/companies", icon: Building2 },
+  { title: "Email History", url: "/email-history", icon: Mail },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
