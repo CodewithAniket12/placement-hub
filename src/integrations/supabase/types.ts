@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      companies: {
+        Row: {
+          created_at: string
+          hr_email: string | null
+          hr_name: string | null
+          hr_phone: string | null
+          id: string
+          industry: string | null
+          name: string
+          notes: string | null
+          poc_1st: string
+          poc_2nd: string | null
+          registration_status: string
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          hr_email?: string | null
+          hr_name?: string | null
+          hr_phone?: string | null
+          id?: string
+          industry?: string | null
+          name: string
+          notes?: string | null
+          poc_1st: string
+          poc_2nd?: string | null
+          registration_status?: string
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          hr_email?: string | null
+          hr_name?: string | null
+          hr_phone?: string | null
+          id?: string
+          industry?: string | null
+          name?: string
+          notes?: string | null
+          poc_1st?: string
+          poc_2nd?: string | null
+          registration_status?: string
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           body: string

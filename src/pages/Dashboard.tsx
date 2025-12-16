@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { companies, Company } from "@/data/mockData";
+import { useCompanies, Company } from "@/hooks/useCompanies";
 import { CompanyCard } from "@/components/company/CompanyCard";
 import { CompanyDetailsPanel } from "@/components/company/CompanyDetailsPanel";
 import { EmailComposeModal } from "@/components/email/EmailComposeModal";
 import { TemplateManagerModal } from "@/components/email/TemplateManagerModal";
-import { Briefcase } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { Briefcase, Loader2 } from "lucide-react";
 
 const COORDINATOR_NAME = "Aniket";
 
@@ -30,7 +29,12 @@ export default function Dashboard() {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [emailCompany, setEmailCompany] = useState<Company | null>(null);
 
-  const assignedCompanies = companies.filter((c) => c.poc === COORDINATOR_NAME);
+  const { data: companies = [], isLoading } = useCompanies();
+
+  // Filter companies where current user is 1st or 2nd POC
+  const assignedCompanies = companies.filter(
+    (c) => c.poc_1st === COORDINATOR_NAME || c.poc_2nd === COORDINATOR_NAME
+  );
 
   const handleCardClick = (company: Company) => {
     setSelectedCompany(company);
@@ -78,17 +82,31 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+
         {/* Company Cards Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {assignedCompanies.map((company) => (
-            <CompanyCard
-              key={company.id}
-              company={company}
-              onCardClick={handleCardClick}
-              onMailClick={handleMailClick}
-            />
-          ))}
-        </div>
+        {!isLoading && (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {assignedCompanies.map((company) => (
+              <CompanyCard
+                key={company.id}
+                company={company}
+                onCardClick={handleCardClick}
+                onMailClick={handleMailClick}
+              />
+            ))}
+            {assignedCompanies.length === 0 && (
+              <div className="col-span-full text-center py-12 text-muted-foreground">
+                No companies assigned yet.
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Company Details Panel */}

@@ -1,5 +1,5 @@
-import { Company } from "@/data/mockData";
-import { Mail, CheckCircle2, Clock, ExternalLink } from "lucide-react";
+import { Company } from "@/hooks/useCompanies";
+import { Mail, CheckCircle2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -21,7 +21,7 @@ export function CompanyCard({ company, onCardClick, onMailClick }: CompanyCardPr
           <h3 className="text-lg font-semibold text-card-foreground group-hover:text-primary transition-colors">
             {company.name}
           </h3>
-          <p className="mt-1 text-sm text-muted-foreground">{company.industry}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{company.industry || "No industry"}</p>
         </div>
         <Badge
           variant={company.status === "Active" ? "default" : "destructive"}
@@ -37,7 +37,7 @@ export function CompanyCard({ company, onCardClick, onMailClick }: CompanyCardPr
 
       {/* Registration Status */}
       <div className="mb-5 flex items-center gap-2">
-        {company.registrationStatus === "Submitted" ? (
+        {company.registration_status === "Submitted" ? (
           <>
             <CheckCircle2 className="h-4 w-4 text-success" />
             <span className="text-sm text-success font-medium">Registration Complete</span>

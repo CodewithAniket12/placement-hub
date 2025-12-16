@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Send, Settings2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Company } from "@/data/mockData";
+import { Company } from "@/hooks/useCompanies";
 
 interface EmailTemplate {
   id: string;
@@ -85,7 +85,7 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
         if (p.key === "company_name") {
           defaults[p.key] = company.name;
         } else if (p.key === "hr_name") {
-          defaults[p.key] = company.hr.name || p.default || "Hi Team";
+          defaults[p.key] = company.hr_name || p.default || "Hi Team";
         } else if (p.default) {
           defaults[p.key] = p.default;
         }
@@ -141,7 +141,7 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
     try {
       const { data, error } = await supabase.functions.invoke("send-email", {
         body: {
-          to: company.hr.email,
+          to: company.hr_email,
           subject: previewSubject,
           body: previewBody,
           companyName: company.name,
@@ -154,7 +154,7 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
       await supabase.from("email_logs").insert({
         template_id: selectedTemplateId,
         company_name: company.name,
-        recipient_email: company.hr.email,
+        recipient_email: company.hr_email || "",
         subject: previewSubject,
         body: previewBody,
         status: "sent",
@@ -163,7 +163,7 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
 
       toast({
         title: "Email sent!",
-        description: `Successfully sent email to ${company.hr.email}`,
+        description: `Successfully sent email to ${company.hr_email}`,
       });
       onClose();
     } catch (error: any) {
@@ -249,7 +249,7 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
               <div className="border rounded-lg p-4 bg-card space-y-4">
                 <div>
                   <p className="text-sm text-muted-foreground">To:</p>
-                  <p className="font-medium">{company?.hr.email}</p>
+                  <p className="font-medium">{company?.hr_email || "No email"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Subject:</p>
