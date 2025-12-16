@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import { companies, Company } from "@/data/mockData";
+import { useCompanies, Company } from "@/hooks/useCompanies";
 import { CompanyDetailsPanel } from "@/components/company/CompanyDetailsPanel";
-import { Search, Filter, Building2, CheckCircle2, Clock, ExternalLink } from "lucide-react";
+import { Search, Building2, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,20 +27,23 @@ export default function AllCompanies() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [registrationFilter, setRegistrationFilter] = useState<string>("all");
 
+  const { data: companies = [], isLoading } = useCompanies();
+
   const filteredCompanies = useMemo(() => {
     return companies.filter((company) => {
       const matchesSearch =
         company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        company.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        company.poc.toLowerCase().includes(searchQuery.toLowerCase());
+        (company.industry?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+        company.poc_1st.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (company.poc_2nd?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
       const matchesStatus = statusFilter === "all" || company.status === statusFilter;
       const matchesRegistration =
-        registrationFilter === "all" || company.registrationStatus === registrationFilter;
+        registrationFilter === "all" || company.registration_status === registrationFilter;
 
       return matchesSearch && matchesStatus && matchesRegistration;
     });
-  }, [searchQuery, statusFilter, registrationFilter]);
+  }, [companies, searchQuery, statusFilter, registrationFilter]);
 
   const handleRowClick = (company: Company) => {
     setSelectedCompany(company);
@@ -101,69 +104,78 @@ export default function AllCompanies() {
         </div>
       </div>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      )}
+
       {/* Table */}
-      <div className="rounded-2xl border border-border bg-card overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableHead className="font-semibold">Company</TableHead>
-              <TableHead className="font-semibold">Industry</TableHead>
-              <TableHead className="font-semibold">POC</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold">Registration</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredCompanies.map((company) => (
-              <TableRow
-                key={company.id}
-                onClick={() => handleRowClick(company)}
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-              >
-                <TableCell>
-                  <div className="flex items-center gap-2">
+      {!isLoading && (
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="font-semibold">Company</TableHead>
+                <TableHead className="font-semibold">Industry</TableHead>
+                <TableHead className="font-semibold">1st POC</TableHead>
+                <TableHead className="font-semibold">2nd POC</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
+                <TableHead className="font-semibold">Registration</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredCompanies.map((company) => (
+                <TableRow
+                  key={company.id}
+                  onClick={() => handleRowClick(company)}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <TableCell>
                     <span className="font-medium text-card-foreground">{company.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{company.industry}</TableCell>
-                <TableCell className="text-muted-foreground">{company.poc}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={company.status === "Active" ? "default" : "destructive"}
-                    className={
-                      company.status === "Active"
-                        ? "bg-success/10 text-success hover:bg-success/20 border-0"
-                        : "bg-destructive/10 text-destructive hover:bg-destructive/20 border-0"
-                    }
-                  >
-                    {company.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {company.registrationStatus === "Submitted" ? (
-                    <span className="inline-flex items-center gap-1 text-sm text-success">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Submitted
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-sm text-warning">
-                      <Clock className="h-4 w-4" />
-                      Pending
-                    </span>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-            {filteredCompanies.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  No companies found matching your criteria.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{company.industry || "-"}</TableCell>
+                  <TableCell className="text-muted-foreground">{company.poc_1st}</TableCell>
+                  <TableCell className="text-muted-foreground">{company.poc_2nd || "-"}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={company.status === "Active" ? "default" : "destructive"}
+                      className={
+                        company.status === "Active"
+                          ? "bg-success/10 text-success hover:bg-success/20 border-0"
+                          : "bg-destructive/10 text-destructive hover:bg-destructive/20 border-0"
+                      }
+                    >
+                      {company.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {company.registration_status === "Submitted" ? (
+                      <span className="inline-flex items-center gap-1 text-sm text-success">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Submitted
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-sm text-warning">
+                        <Clock className="h-4 w-4" />
+                        Pending
+                      </span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredCompanies.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    No companies found matching your criteria.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {/* Company Details Panel */}
       <CompanyDetailsPanel
