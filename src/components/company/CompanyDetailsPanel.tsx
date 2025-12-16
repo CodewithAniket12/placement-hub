@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Company, useUpdateCompanyNotes } from "@/hooks/useCompanies";
 import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,16 @@ interface CompanyDetailsPanelProps {
 }
 
 export function CompanyDetailsPanel({ company, isOpen, onClose }: CompanyDetailsPanelProps) {
-  const [notes, setNotes] = useState(company?.notes || "");
+  const [notes, setNotes] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const updateNotes = useUpdateCompanyNotes();
+
+  // Sync notes when company changes
+  useEffect(() => {
+    if (company && !isEditingNotes) {
+      setNotes(company.notes || "");
+    }
+  }, [company?.id, company?.notes, isEditingNotes]);
 
   if (!company) return null;
 
@@ -33,10 +40,6 @@ export function CompanyDetailsPanel({ company, isOpen, onClose }: CompanyDetails
     }
   };
 
-  // Reset notes when company changes
-  if (company.notes !== notes && !isEditingNotes) {
-    setNotes(company.notes || "");
-  }
 
   return (
     <>
