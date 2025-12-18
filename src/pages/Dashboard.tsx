@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useCompanies, Company } from "@/hooks/useCompanies";
 import { CompanyCard } from "@/components/company/CompanyCard";
 import { CompanyDetailsPanel } from "@/components/company/CompanyDetailsPanel";
+import { AddCompanyModal } from "@/components/company/AddCompanyModal";
 import { EmailComposeModal } from "@/components/email/EmailComposeModal";
 import { TemplateManagerModal } from "@/components/email/TemplateManagerModal";
-import { Briefcase, Loader2 } from "lucide-react";
+import { Briefcase, Loader2, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const COORDINATOR_NAME = "Aniket";
 
@@ -27,6 +29,7 @@ export default function Dashboard() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false);
   const [emailCompany, setEmailCompany] = useState<Company | null>(null);
 
   const { data: companies = [], isLoading } = useCompanies();
@@ -70,16 +73,22 @@ export default function Dashboard() {
 
       {/* My Assigned Companies Section */}
       <div>
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <Briefcase className="h-5 w-5 text-primary" />
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+              <Briefcase className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">My Assigned Companies</h2>
+              <p className="text-sm text-muted-foreground">
+                {assignedCompanies.length} companies under your management
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">My Assigned Companies</h2>
-            <p className="text-sm text-muted-foreground">
-              {assignedCompanies.length} companies under your management
-            </p>
-          </div>
+          <Button onClick={() => setIsAddCompanyModalOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Company
+          </Button>
         </div>
 
         {/* Loading State */}
@@ -132,6 +141,12 @@ export default function Dashboard() {
       <TemplateManagerModal
         isOpen={isTemplateModalOpen}
         onClose={() => setIsTemplateModalOpen(false)}
+      />
+
+      {/* Add Company Modal */}
+      <AddCompanyModal
+        isOpen={isAddCompanyModalOpen}
+        onClose={() => setIsAddCompanyModalOpen(false)}
       />
     </div>
   );

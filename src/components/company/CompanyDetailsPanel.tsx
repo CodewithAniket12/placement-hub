@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
-import { Company, useUpdateCompanyNotes } from "@/hooks/useCompanies";
-import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users } from "lucide-react";
+import { Company, useUpdateCompanyNotes, useUpdateCompany } from "@/hooks/useCompanies";
+import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 
 interface CompanyDetailsPanelProps {
@@ -13,17 +16,40 @@ interface CompanyDetailsPanelProps {
   onSendEmail?: (company: Company) => void;
 }
 
+const POC_OPTIONS = ["Aniket", "Rushikesh", "Priya", "Bajrang", "Manasi", "Parshuram"];
+
 export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: CompanyDetailsPanelProps) {
   const [notes, setNotes] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [editForm, setEditForm] = useState({
+    hr_name: "",
+    hr_phone: "",
+    hr_email: "",
+    poc_1st: "",
+    poc_2nd: "",
+  });
+  
   const updateNotes = useUpdateCompanyNotes();
+  const updateCompany = useUpdateCompany();
 
-  // Sync notes when company changes
+  // Sync state when company changes
   useEffect(() => {
-    if (company && !isEditingNotes) {
-      setNotes(company.notes || "");
+    if (company) {
+      if (!isEditingNotes) {
+        setNotes(company.notes || "");
+      }
+      if (!isEditingDetails) {
+        setEditForm({
+          hr_name: company.hr_name || "",
+          hr_phone: company.hr_phone || "",
+          hr_email: company.hr_email || "",
+          poc_1st: company.poc_1st,
+          poc_2nd: company.poc_2nd || "",
+        });
+      }
     }
-  }, [company?.id, company?.notes, isEditingNotes]);
+  }, [company?.id, company?.hr_name, company?.hr_phone, company?.hr_email, company?.poc_1st, company?.poc_2nd, company?.notes, isEditingNotes, isEditingDetails]);
 
   if (!company) return null;
 
@@ -40,6 +66,23 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
       toast({ title: "Notes saved successfully" });
     } catch (error) {
       toast({ title: "Failed to save notes", variant: "destructive" });
+    }
+  };
+
+  const handleSaveDetails = async () => {
+    try {
+      await updateCompany.mutateAsync({
+        id: company.id,
+        hr_name: editForm.hr_name.trim() || null,
+        hr_phone: editForm.hr_phone.trim() || null,
+        hr_email: editForm.hr_email.trim() || null,
+        poc_1st: editForm.poc_1st,
+        poc_2nd: editForm.poc_2nd || null,
+      });
+      setIsEditingDetails(false);
+      toast({ title: "Company details updated!" });
+    } catch (error) {
+      toast({ title: "Failed to update details", variant: "destructive" });
     }
   };
 
@@ -125,58 +168,145 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
 
             {/* POC Section */}
             <div className="mb-6">
-              <h3 className="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide">Point of Contact</h3>
-              <div className="space-y-3">
-                <div className="rounded-xl border border-border bg-muted/50 p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <User className="h-4 w-4 text-primary" />
-                    <span className="text-xs font-medium text-primary uppercase">1st POC (Primary)</span>
-                  </div>
-                  <p className="text-card-foreground font-medium">{company.poc_1st}</p>
-                </div>
-                {company.poc_2nd && (
-                  <div className="rounded-xl border border-border bg-muted/50 p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs font-medium text-muted-foreground uppercase">2nd POC (Backup)</span>
-                    </div>
-                    <p className="text-card-foreground">{company.poc_2nd}</p>
-                  </div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Point of Contact & HR</h3>
+                {!isEditingDetails && (
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditingDetails(true)} className="text-xs">
+                    <Pencil className="h-3 w-3 mr-1" />
+                    Edit
+                  </Button>
                 )}
               </div>
-            </div>
 
-            {/* HR Details */}
-            {(company.hr_name || company.hr_phone || company.hr_email) && (
-              <div className="mb-6">
-                <h3 className="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide">HR Contact</h3>
-                <div className="rounded-xl border border-border bg-muted/50 p-4">
-                  {company.hr_name && (
-                    <p className="mb-3 text-base font-medium text-card-foreground">{company.hr_name}</p>
-                  )}
-                  <div className="space-y-2">
-                    {company.hr_phone && (
-                      <a
-                        href={`tel:${company.hr_phone}`}
-                        className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <Phone className="h-4 w-4" />
-                        {company.hr_phone}
-                      </a>
-                    )}
-                    {company.hr_email && (
-                      <a
-                        href={`mailto:${company.hr_email}`}
-                        className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <Mail className="h-4 w-4" />
-                        {company.hr_email}
-                      </a>
-                    )}
+              {isEditingDetails ? (
+                <div className="space-y-4 p-4 border border-border rounded-xl bg-muted/30">
+                  {/* POC Fields */}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">1st POC</Label>
+                      <Select value={editForm.poc_1st} onValueChange={(v) => setEditForm({ ...editForm, poc_1st: v })}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {POC_OPTIONS.map((poc) => (
+                            <SelectItem key={poc} value={poc}>{poc}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">2nd POC</Label>
+                      <Select value={editForm.poc_2nd} onValueChange={(v) => setEditForm({ ...editForm, poc_2nd: v })}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {POC_OPTIONS.filter(p => p !== editForm.poc_1st).map((poc) => (
+                            <SelectItem key={poc} value={poc}>{poc}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* HR Fields */}
+                  <div className="space-y-1">
+                    <Label className="text-xs">HR Name</Label>
+                    <Input
+                      value={editForm.hr_name}
+                      onChange={(e) => setEditForm({ ...editForm, hr_name: e.target.value })}
+                      placeholder="Contact name"
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">HR Phone</Label>
+                    <Input
+                      value={editForm.hr_phone}
+                      onChange={(e) => setEditForm({ ...editForm, hr_phone: e.target.value })}
+                      placeholder="Phone number"
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">HR Email</Label>
+                    <Input
+                      type="email"
+                      value={editForm.hr_email}
+                      onChange={(e) => setEditForm({ ...editForm, hr_email: e.target.value })}
+                      placeholder="email@company.com"
+                      className="h-9"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button size="sm" onClick={handleSaveDetails} disabled={updateCompany.isPending}>
+                      {updateCompany.isPending ? "Saving..." : "Save"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      setEditForm({
+                        hr_name: company.hr_name || "",
+                        hr_phone: company.hr_phone || "",
+                        hr_email: company.hr_email || "",
+                        poc_1st: company.poc_1st,
+                        poc_2nd: company.poc_2nd || "",
+                      });
+                      setIsEditingDetails(false);
+                    }}>
+                      Cancel
+                    </Button>
                   </div>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-border bg-muted/50 p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <User className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-medium text-primary uppercase">1st POC</span>
+                    </div>
+                    <p className="text-card-foreground font-medium">{company.poc_1st}</p>
+                  </div>
+                  {company.poc_2nd && (
+                    <div className="rounded-xl border border-border bg-muted/50 p-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground uppercase">2nd POC</span>
+                      </div>
+                      <p className="text-card-foreground">{company.poc_2nd}</p>
+                    </div>
+                  )}
+                  {(company.hr_name || company.hr_phone || company.hr_email) && (
+                    <div className="rounded-xl border border-border bg-muted/50 p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground uppercase">HR Contact</span>
+                      </div>
+                      {company.hr_name && (
+                        <p className="text-base font-medium text-card-foreground">{company.hr_name}</p>
+                      )}
+                      <div className="space-y-1 mt-2">
+                        {company.hr_phone && (
+                          <a href={`tel:${company.hr_phone}`} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+                            <Phone className="h-3 w-3" />
+                            {company.hr_phone}
+                          </a>
+                        )}
+                        {company.hr_email && (
+                          <a href={`mailto:${company.hr_email}`} className="flex items-center gap-2 text-sm text-primary hover:underline">
+                            <Mail className="h-3 w-3" />
+                            {company.hr_email}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {!company.hr_name && !company.hr_phone && !company.hr_email && (
+                    <p className="text-sm text-muted-foreground italic">No HR contact added. Click Edit to add.</p>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Industry */}
             {company.industry && (
