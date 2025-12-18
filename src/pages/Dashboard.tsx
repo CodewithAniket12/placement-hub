@@ -114,6 +114,10 @@ export default function Dashboard() {
         company={selectedCompany}
         isOpen={isPanelOpen}
         onClose={handlePanelClose}
+        onSendEmail={(company) => {
+          setEmailCompany(company);
+          setIsEmailModalOpen(true);
+        }}
       />
 
       {/* Email Compose Modal */}

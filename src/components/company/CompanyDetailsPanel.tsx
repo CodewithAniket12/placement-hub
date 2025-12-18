@@ -10,9 +10,10 @@ interface CompanyDetailsPanelProps {
   company: Company | null;
   isOpen: boolean;
   onClose: () => void;
+  onSendEmail?: (company: Company) => void;
 }
 
-export function CompanyDetailsPanel({ company, isOpen, onClose }: CompanyDetailsPanelProps) {
+export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: CompanyDetailsPanelProps) {
   const [notes, setNotes] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const updateNotes = useUpdateCompanyNotes();
@@ -27,7 +28,9 @@ export function CompanyDetailsPanel({ company, isOpen, onClose }: CompanyDetails
   if (!company) return null;
 
   const handleSendEmail = () => {
-    console.log("Open Mail Template");
+    if (onSendEmail && company.hr_email) {
+      onSendEmail(company);
+    }
   };
 
   const handleSaveNotes = async () => {
@@ -243,11 +246,16 @@ export function CompanyDetailsPanel({ company, isOpen, onClose }: CompanyDetails
           <div className="border-t border-border p-6">
             <Button
               onClick={handleSendEmail}
-              className="w-full gap-2 rounded-xl bg-primary hover:bg-primary/90 py-6 text-base"
+              className={`w-full gap-2 rounded-xl py-6 text-base ${
+                company.hr_email 
+                  ? "bg-primary hover:bg-primary/90" 
+                  : "bg-muted text-muted-foreground"
+              }`}
               size="lg"
+              disabled={!company.hr_email}
             >
               <Send className="h-5 w-5" />
-              Send Email
+              {company.hr_email ? `Email ${company.hr_name || 'HR'}` : "No Email Available"}
             </Button>
           </div>
         </div>
