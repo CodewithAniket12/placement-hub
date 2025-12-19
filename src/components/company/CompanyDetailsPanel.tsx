@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Company, useUpdateCompanyNotes, useUpdateCompany } from "@/hooks/useCompanies";
-import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil } from "lucide-react";
+import { Company, useUpdateCompanyNotes, useUpdateCompany, useDeleteCompany, useBlacklistCompany } from "@/hooks/useCompanies";
+import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil, Trash2, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface CompanyDetailsPanelProps {
   company: Company | null;
@@ -30,8 +40,16 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
     poc_2nd: "",
   });
   
+  // Dialog states
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showBlacklistDialog, setShowBlacklistDialog] = useState(false);
+  const [showEmailConfirmDialog, setShowEmailConfirmDialog] = useState(false);
+  const [blacklistReason, setBlacklistReason] = useState("");
+  
   const updateNotes = useUpdateCompanyNotes();
   const updateCompany = useUpdateCompany();
+  const deleteCompany = useDeleteCompany();
+  const blacklistCompany = useBlacklistCompany();
 
   // Sync state when company changes
   useEffect(() => {
@@ -55,8 +73,15 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
 
   const handleSendEmail = () => {
     if (onSendEmail && company.hr_email) {
+      setShowEmailConfirmDialog(true);
+    }
+  };
+
+  const confirmSendEmail = () => {
+    if (onSendEmail && company.hr_email) {
       onSendEmail(company);
     }
+    setShowEmailConfirmDialog(false);
   };
 
   const handleSaveNotes = async () => {
@@ -86,6 +111,31 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
     }
   };
 
+  const handleDeleteCompany = async () => {
+    try {
+      await deleteCompany.mutateAsync(company.id);
+      setShowDeleteDialog(false);
+      onClose();
+      toast({ title: "Company deleted successfully" });
+    } catch (error) {
+      toast({ title: "Failed to delete company", variant: "destructive" });
+    }
+  };
+
+  const handleBlacklistCompany = async () => {
+    if (!blacklistReason.trim()) {
+      toast({ title: "Please provide a reason for blacklisting", variant: "destructive" });
+      return;
+    }
+    try {
+      await blacklistCompany.mutateAsync({ id: company.id, reason: blacklistReason.trim() });
+      setShowBlacklistDialog(false);
+      setBlacklistReason("");
+      toast({ title: "Company blacklisted" });
+    } catch (error) {
+      toast({ title: "Failed to blacklist company", variant: "destructive" });
+    }
+  };
 
   return (
     <>
@@ -370,6 +420,33 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                 </div>
               )}
             </div>
+
+            {/* Actions Section */}
+            <div className="mb-6">
+              <h3 className="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide">Actions</h3>
+              <div className="flex gap-2">
+                {company.status !== "Blacklisted" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowBlacklistDialog(true)}
+                    className="text-warning border-warning/30 hover:bg-warning/10"
+                  >
+                    <Ban className="h-4 w-4 mr-1" />
+                    Blacklist
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </div>
+            </div>
           </div>
 
           {/* Footer */}
@@ -390,6 +467,73 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Company</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{company.name}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCompany}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteCompany.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Blacklist Dialog */}
+      <AlertDialog open={showBlacklistDialog} onOpenChange={setShowBlacklistDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Blacklist Company</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please provide a reason for blacklisting <strong>{company.name}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            value={blacklistReason}
+            onChange={(e) => setBlacklistReason(e.target.value)}
+            placeholder="Enter reason for blacklisting..."
+            className="min-h-[80px] mt-2"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setBlacklistReason("")}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBlacklistCompany}
+              className="bg-warning text-warning-foreground hover:bg-warning/90"
+              disabled={!blacklistReason.trim()}
+            >
+              {blacklistCompany.isPending ? "Blacklisting..." : "Blacklist"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Email Confirmation Dialog */}
+      <AlertDialog open={showEmailConfirmDialog} onOpenChange={setShowEmailConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Email</AlertDialogTitle>
+            <AlertDialogDescription>
+              Send email to <strong>{company.hr_email}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSendEmail}>
+              Send Email
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
