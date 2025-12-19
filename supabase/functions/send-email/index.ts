@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import nodemailer from "https://esm.sh/nodemailer@6.9.3";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,27 +34,34 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Sending email to ${to} for company ${companyName}`);
     console.log(`Subject: ${subject}`);
 
-    // Create transporter with Gmail service
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: GMAIL_USER,
-        pass: GMAIL_PASS,
+    // Create SMTP client for Gmail
+    const client = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 465,
+        tls: true,
+        auth: {
+          username: GMAIL_USER,
+          password: GMAIL_PASS,
+        },
       },
     });
 
     // Send the email
-    const info = await transporter.sendMail({
-      from: `Placement Coordinator <${GMAIL_USER}>`,
+    await client.send({
+      from: GMAIL_USER,
       to: to,
       subject: subject,
+      content: "auto",
       html: body.replace(/\n/g, "<br>"),
     });
 
-    console.log("Email sent successfully:", info.messageId);
+    await client.close();
+
+    console.log("Email sent successfully");
 
     return new Response(
-      JSON.stringify({ success: true, message: "Email sent successfully", messageId: info.messageId }),
+      JSON.stringify({ success: true, message: "Email sent successfully" }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
