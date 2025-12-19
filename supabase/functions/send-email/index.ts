@@ -1,4 +1,5 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import nodemailer from "https://esm.sh/nodemailer@6.9.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,19 +14,19 @@ interface SendEmailRequest {
   companyName: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
+serve(async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const MAILGUN_API_KEY = Deno.env.get("MAILGUN_API_KEY");
-    const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN");
+    const GMAIL_USER = Deno.env.get("GMAIL_USER");
+    const GMAIL_PASS = Deno.env.get("GMAIL_PASS");
 
-    if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN) {
-      console.error("Missing Mailgun configuration");
-      throw new Error("Mailgun configuration is missing");
+    if (!GMAIL_USER || !GMAIL_PASS) {
+      console.error("Missing Gmail configuration");
+      throw new Error("Gmail configuration is missing");
     }
 
     const { to, subject, body, companyName }: SendEmailRequest = await req.json();
@@ -33,33 +34,27 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending email to ${to} for company ${companyName}`);
     console.log(`Subject: ${subject}`);
 
-    // Send email via Mailgun API
-    const formData = new FormData();
-    formData.append("from", `Placement Coordinator <mailgun@${MAILGUN_DOMAIN}>`);
-    formData.append("to", to);
-    formData.append("subject", subject);
-    formData.append("html", body.replace(/\n/g, "<br>"));
+    // Create transporter with Gmail service
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: GMAIL_USER,
+        pass: GMAIL_PASS,
+      },
+    });
 
-    const response = await fetch(
-      `https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`,
-        },
-        body: formData,
-      }
-    );
+    // Send the email
+    const info = await transporter.sendMail({
+      from: `Placement Coordinator <${GMAIL_USER}>`,
+      to: to,
+      subject: subject,
+      html: body.replace(/\n/g, "<br>"),
+    });
 
-    const responseData = await response.json();
-    console.log("Mailgun response:", responseData);
-
-    if (!response.ok) {
-      throw new Error(responseData.message || "Failed to send email");
-    }
+    console.log("Email sent successfully:", info.messageId);
 
     return new Response(
-      JSON.stringify({ success: true, message: "Email sent successfully", data: responseData }),
+      JSON.stringify({ success: true, message: "Email sent successfully", messageId: info.messageId }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -75,6 +70,4 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   }
-};
-
-serve(handler);
+});
