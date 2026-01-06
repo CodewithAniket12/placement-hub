@@ -9,6 +9,17 @@ import { Loader2, Send, Settings2, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/hooks/useCompanies";
+import { useCoordinators, Coordinator } from "@/hooks/useCoordinators";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface EmailTemplate {
   id: string;
@@ -32,6 +43,8 @@ interface EmailComposeModalProps {
   onManageTemplates: () => void;
 }
 
+const DEFAULT_FROM = "PUCSD Placement Cell";
+
 export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates }: EmailComposeModalProps) {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
@@ -42,6 +55,14 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
   const [isSending, setIsSending] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiPurpose, setAiPurpose] = useState("");
+  
+  // Coordinator selection
+  const { data: coordinators = [] } = useCoordinators();
+  const [selectedCoordinatorId, setSelectedCoordinatorId] = useState<string>("");
+  const [showSendConfirmation, setShowSendConfirmation] = useState(false);
+
+  // Get selected coordinator
+  const selectedCoordinator = coordinators.find(c => c.id === selectedCoordinatorId);
 
   // Fetch templates
   useEffect(() => {
@@ -88,13 +109,19 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
           defaults[p.key] = company.name;
         } else if (p.key === "hr_name") {
           defaults[p.key] = company.hr_name || p.default || "Hi Team";
+        } else if (p.key === "from") {
+          defaults[p.key] = DEFAULT_FROM;
+        } else if (p.key === "coordinator_name" && selectedCoordinator) {
+          defaults[p.key] = selectedCoordinator.name;
+        } else if (p.key === "coordinator_phone" && selectedCoordinator) {
+          defaults[p.key] = selectedCoordinator.phone;
         } else if (p.default) {
           defaults[p.key] = p.default;
         }
       });
       setPlaceholderValues(defaults);
     }
-  }, [selectedTemplateId, company, templates]);
+  }, [selectedTemplateId, company, templates, selectedCoordinator]);
 
   // Update preview when template or values change
   useEffect(() => {
@@ -161,26 +188,34 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
     }
   };
 
-  const handleSendEmail = async () => {
+  const handleSendEmailClick = () => {
     if (!company) return;
 
     const template = templates.find((t) => t.id === selectedTemplateId);
-    if (!template) return;
+    
+    // Validate required fields if template is selected
+    if (template) {
+      const missingRequired = template.placeholders
+        .filter((p) => p.required && !placeholderValues[p.key])
+        .map((p) => p.label);
 
-    // Validate required fields
-    const missingRequired = template.placeholders
-      .filter((p) => p.required && !placeholderValues[p.key])
-      .map((p) => p.label);
-
-    if (missingRequired.length > 0) {
-      toast({
-        title: "Missing required fields",
-        description: `Please fill in: ${missingRequired.join(", ")}`,
-        variant: "destructive",
-      });
-      return;
+      if (missingRequired.length > 0) {
+        toast({
+          title: "Missing required fields",
+          description: `Please fill in: ${missingRequired.join(", ")}`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
+    // Show confirmation dialog
+    setShowSendConfirmation(true);
+  };
+
+  const handleConfirmSendEmail = async () => {
+    if (!company) return;
+    setShowSendConfirmation(false);
     setIsSending(true);
 
     try {
@@ -197,7 +232,7 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
 
       // Log the email
       await supabase.from("email_logs").insert({
-        template_id: selectedTemplateId,
+        template_id: selectedTemplateId || null,
         company_name: company.name,
         recipient_email: company.hr_email || "",
         subject: previewSubject,
@@ -285,6 +320,23 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
               </div>
             </div>
 
+            {/* Coordinator Selection */}
+            <div className="space-y-2">
+              <Label>Coordinator (for signature)</Label>
+              <Select value={selectedCoordinatorId} onValueChange={setSelectedCoordinatorId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select coordinator" />
+                </SelectTrigger>
+                <SelectContent>
+                  {coordinators.map((coordinator) => (
+                    <SelectItem key={coordinator.id} value={coordinator.id}>
+                      {coordinator.name} ({coordinator.phone})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Template Selection */}
             <div className="space-y-2">
               <Label>Email Template</Label>
@@ -354,7 +406,7 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
 
             {/* Send Button */}
             <Button
-              onClick={handleSendEmail}
+              onClick={handleSendEmailClick}
               disabled={isSending}
               className="w-full gap-2"
               size="lg"
@@ -369,6 +421,25 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
           </div>
         )}
       </DialogContent>
+
+      {/* Send Confirmation Dialog */}
+      <AlertDialog open={showSendConfirmation} onOpenChange={setShowSendConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Send Email</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to send this email to{" "}
+              <span className="font-semibold text-foreground">{company?.hr_email}</span>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSendEmail}>
+              Send Email
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

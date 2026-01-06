@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Plus, Trash2, Edit2, ArrowLeft, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Plus, Trash2, Edit2, ArrowLeft, X, UserPlus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useCoordinators, useAddCoordinator, Coordinator } from "@/hooks/useCoordinators";
 
 interface Placeholder {
   key: string;
@@ -35,6 +37,32 @@ export function TemplateManagerModal({ isOpen, onClose }: TemplateManagerModalPr
   const [editingTemplate, setEditingTemplate] = useState<Partial<EmailTemplate> | null>(null);
   const [placeholders, setPlaceholders] = useState<Placeholder[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Coordinator management
+  const { data: coordinators = [] } = useCoordinators();
+  const addCoordinatorMutation = useAddCoordinator();
+  const [showAddCoordinator, setShowAddCoordinator] = useState(false);
+  const [newCoordinatorName, setNewCoordinatorName] = useState("");
+  const [newCoordinatorPhone, setNewCoordinatorPhone] = useState("");
+
+  const handleAddCoordinator = async () => {
+    if (!newCoordinatorName.trim() || !newCoordinatorPhone.trim()) {
+      toast({ title: "Please enter both name and phone number", variant: "destructive" });
+      return;
+    }
+    try {
+      await addCoordinatorMutation.mutateAsync({ 
+        name: newCoordinatorName.trim(), 
+        phone: newCoordinatorPhone.trim() 
+      });
+      toast({ title: "Coordinator added successfully" });
+      setNewCoordinatorName("");
+      setNewCoordinatorPhone("");
+      setShowAddCoordinator(false);
+    } catch (error: any) {
+      toast({ title: "Failed to add coordinator", description: error.message, variant: "destructive" });
+    }
+  };
 
   // Fetch templates
   useEffect(() => {
@@ -206,6 +234,58 @@ export function TemplateManagerModal({ isOpen, onClose }: TemplateManagerModalPr
           </div>
         ) : view === "list" ? (
           <div className="space-y-4">
+            {/* Coordinator Management */}
+            <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Coordinators</Label>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowAddCoordinator(!showAddCoordinator)}
+                  className="gap-1"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Add
+                </Button>
+              </div>
+              
+              {showAddCoordinator && (
+                <div className="flex gap-2 items-end p-3 bg-background rounded-lg border">
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Name</Label>
+                    <Input
+                      value={newCoordinatorName}
+                      onChange={(e) => setNewCoordinatorName(e.target.value)}
+                      placeholder="Enter name"
+                    />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Phone</Label>
+                    <Input
+                      value={newCoordinatorPhone}
+                      onChange={(e) => setNewCoordinatorPhone(e.target.value)}
+                      placeholder="Enter phone"
+                    />
+                  </div>
+                  <Button 
+                    size="sm" 
+                    onClick={handleAddCoordinator}
+                    disabled={addCoordinatorMutation.isPending}
+                  >
+                    {addCoordinatorMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
+                  </Button>
+                </div>
+              )}
+              
+              <div className="flex flex-wrap gap-2">
+                {coordinators.map((c) => (
+                  <div key={c.id} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                    {c.name} ({c.phone})
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <Button onClick={handleCreateNew} className="w-full gap-2">
               <Plus className="h-4 w-4" />
               Create New Template

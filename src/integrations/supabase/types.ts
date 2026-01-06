@@ -65,6 +65,27 @@ export type Database = {
         }
         Relationships: []
       }
+      coordinators: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           body: string
