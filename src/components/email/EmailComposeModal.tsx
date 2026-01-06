@@ -151,13 +151,24 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
   const handleGenerateWithAI = async () => {
     if (!company) return;
     
+    if (!selectedCoordinator) {
+      toast({
+        title: "Select Coordinator",
+        description: "Please select a coordinator for the email signature",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-email", {
         body: {
           companyName: company.name,
           hrName: company.hr_name,
-          purpose: aiPurpose || "Campus recruitment invitation - requesting the company to participate in our campus placement drive."
+          purpose: aiPurpose || "Campus recruitment invitation - requesting the company to participate in our campus placement drive.",
+          senderName: selectedCoordinator.name,
+          senderPhone: selectedCoordinator.phone
         }
       });
 
