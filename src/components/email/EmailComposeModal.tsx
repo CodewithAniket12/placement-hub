@@ -87,9 +87,10 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
             : [],
         }));
         setTemplates(formattedTemplates);
-        if (formattedTemplates.length > 0) {
+        if (formattedTemplates.length > 0 && !selectedTemplateId) {
           setSelectedTemplateId(formattedTemplates[0].id);
         }
+        setIsAiGenerated(false); // Reset AI generated flag when modal opens
       }
       setIsLoading(false);
     }
@@ -99,8 +100,14 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
     }
   }, [isOpen]);
 
-  // Set default values when template or company changes
+  // Track if AI generated content to prevent template overwrite
+  const [isAiGenerated, setIsAiGenerated] = useState(false);
+
+  // Set default values when template or company changes (but not coordinator alone)
   useEffect(() => {
+    // Skip if AI generated content - don't reset
+    if (isAiGenerated) return;
+    
     const template = templates.find((t) => t.id === selectedTemplateId);
     if (template && company) {
       const defaults: Record<string, string> = {};
@@ -111,17 +118,13 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
           defaults[p.key] = company.hr_name || p.default || "Hi Team";
         } else if (p.key === "from") {
           defaults[p.key] = DEFAULT_FROM;
-        } else if (p.key === "coordinator_name" && selectedCoordinator) {
-          defaults[p.key] = selectedCoordinator.name;
-        } else if (p.key === "coordinator_phone" && selectedCoordinator) {
-          defaults[p.key] = selectedCoordinator.phone;
         } else if (p.default) {
           defaults[p.key] = p.default;
         }
       });
       setPlaceholderValues(defaults);
     }
-  }, [selectedTemplateId, company, templates, selectedCoordinator]);
+  }, [selectedTemplateId, company, templates, isAiGenerated]);
 
   // Update preview when template or values change
   useEffect(() => {
@@ -171,6 +174,7 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
 
       setPreviewSubject(data.subject);
       setPreviewBody(data.body);
+      setIsAiGenerated(true); // Mark as AI generated to prevent template overwrite
       
       toast({
         title: "Email Generated",
@@ -340,7 +344,13 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
             {/* Template Selection */}
             <div className="space-y-2">
               <Label>Email Template</Label>
-              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+              <Select 
+                value={selectedTemplateId} 
+                onValueChange={(value) => {
+                  setSelectedTemplateId(value);
+                  setIsAiGenerated(false); // Reset AI flag when manually selecting template
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a template" />
                 </SelectTrigger>
