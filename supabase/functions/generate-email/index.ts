@@ -11,26 +11,29 @@ serve(async (req) => {
   }
 
   try {
-    const { companyName, hrName, purpose } = await req.json();
+    const { companyName, hrName, purpose, senderName, senderPhone } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const systemPrompt = `You are a professional email writer for a college placement cell. 
+    const systemPrompt = `You are a professional email writer for a college placement cell (PUCSD Placement Cell). 
 Write concise, professional emails to HR contacts at companies for campus recruitment purposes.
 Keep emails brief but warm and professional. Use proper business email format.
-Do not include subject line in the body - return it separately.`;
+Do not include subject line in the body - return it separately.
+IMPORTANT: End the email with ONLY "Best regards,\n${senderName || 'Placement Coordinator'}" - do not add phone numbers, email addresses, or any other contact details in the signature.`;
 
     const userPrompt = `Write a professional email to ${hrName || 'the HR team'} at ${companyName} for the following purpose:
 
 ${purpose || 'Campus recruitment invitation - requesting the company to participate in our campus placement drive.'}
 
+The email is being sent by ${senderName || 'Placement Coordinator'} from PUCSD Placement Cell.
+
 Return the response in this exact JSON format:
 {
   "subject": "Email subject line here",
-  "body": "Email body here"
+  "body": "Email body here (ending with just Best regards and sender name, no phone/email in signature)"
 }`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
