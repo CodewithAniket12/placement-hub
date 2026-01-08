@@ -32,12 +32,21 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
   const [notes, setNotes] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [isEditingJobDetails, setIsEditingJobDetails] = useState(false);
   const [editForm, setEditForm] = useState({
     hr_name: "",
     hr_phone: "",
     hr_email: "",
     poc_1st: "",
     poc_2nd: "",
+  });
+  const [jobDetailsForm, setJobDetailsForm] = useState({
+    job_roles: "",
+    package_offered: "",
+    eligibility_criteria: "",
+    bond_details: "",
+    job_location: "",
+    selection_process: "",
   });
   
   // Dialog states
@@ -68,8 +77,18 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
           poc_2nd: company.poc_2nd || "",
         });
       }
+      if (!isEditingJobDetails) {
+        setJobDetailsForm({
+          job_roles: company.job_roles || "",
+          package_offered: company.package_offered || "",
+          eligibility_criteria: company.eligibility_criteria || "",
+          bond_details: company.bond_details || "",
+          job_location: company.job_location || "",
+          selection_process: company.selection_process || "",
+        });
+      }
     }
-  }, [company?.id, company?.hr_name, company?.hr_phone, company?.hr_email, company?.poc_1st, company?.poc_2nd, company?.notes, isEditingNotes, isEditingDetails]);
+  }, [company?.id, company?.hr_name, company?.hr_phone, company?.hr_email, company?.poc_1st, company?.poc_2nd, company?.notes, company?.job_roles, company?.package_offered, company?.eligibility_criteria, company?.bond_details, company?.job_location, company?.selection_process, isEditingNotes, isEditingDetails, isEditingJobDetails]);
 
   if (!company) return null;
 
@@ -110,6 +129,25 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
       toast({ title: "Company details updated!" });
     } catch (error) {
       toast({ title: "Failed to update details", variant: "destructive" });
+    }
+  };
+
+  const handleSaveJobDetails = async () => {
+    try {
+      await updateCompany.mutateAsync({
+        id: company.id,
+        job_roles: jobDetailsForm.job_roles.trim() || null,
+        package_offered: jobDetailsForm.package_offered.trim() || null,
+        eligibility_criteria: jobDetailsForm.eligibility_criteria.trim() || null,
+        bond_details: jobDetailsForm.bond_details.trim() || null,
+        job_location: jobDetailsForm.job_location.trim() || null,
+        selection_process: jobDetailsForm.selection_process.trim() || null,
+        registration_status: "Submitted",
+      });
+      setIsEditingJobDetails(false);
+      toast({ title: "Job details updated!" });
+    } catch (error) {
+      toast({ title: "Failed to update job details", variant: "destructive" });
     }
   };
 
@@ -240,16 +278,99 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
 
             {/* Registration Form Data Section */}
             <div className="mb-6">
-              <h3 className="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Registration Form Data
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Job Details
+                </h3>
+                {!isEditingJobDetails && (
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditingJobDetails(true)} className="text-xs">
+                    <Pencil className="h-3 w-3 mr-1" />
+                    Edit
+                  </Button>
+                )}
+              </div>
               <div className="rounded-xl border border-border bg-muted/50 p-4">
-                {company.registration_status === "Submitted" ? (
+                {isEditingJobDetails ? (
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Job Roles</Label>
+                      <Input
+                        value={jobDetailsForm.job_roles}
+                        onChange={(e) => setJobDetailsForm({ ...jobDetailsForm, job_roles: e.target.value })}
+                        placeholder="e.g., Software Engineer, Data Analyst"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Package Offered</Label>
+                      <Input
+                        value={jobDetailsForm.package_offered}
+                        onChange={(e) => setJobDetailsForm({ ...jobDetailsForm, package_offered: e.target.value })}
+                        placeholder="e.g., 6-8 LPA"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Eligibility Criteria</Label>
+                      <Textarea
+                        value={jobDetailsForm.eligibility_criteria}
+                        onChange={(e) => setJobDetailsForm({ ...jobDetailsForm, eligibility_criteria: e.target.value })}
+                        placeholder="e.g., Min 7.0 CGPA, CS/IT branches only"
+                        className="min-h-[60px]"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Job Location</Label>
+                      <Input
+                        value={jobDetailsForm.job_location}
+                        onChange={(e) => setJobDetailsForm({ ...jobDetailsForm, job_location: e.target.value })}
+                        placeholder="e.g., Pune, Bangalore"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Bond Details</Label>
+                      <Input
+                        value={jobDetailsForm.bond_details}
+                        onChange={(e) => setJobDetailsForm({ ...jobDetailsForm, bond_details: e.target.value })}
+                        placeholder="e.g., 2 year service agreement"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Selection Process</Label>
+                      <Textarea
+                        value={jobDetailsForm.selection_process}
+                        onChange={(e) => setJobDetailsForm({ ...jobDetailsForm, selection_process: e.target.value })}
+                        placeholder="e.g., Online Test → Technical Interview → HR"
+                        className="min-h-[60px]"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button size="sm" onClick={handleSaveJobDetails} disabled={updateCompany.isPending}>
+                        {updateCompany.isPending ? "Saving..." : "Save"}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setJobDetailsForm({
+                          job_roles: company.job_roles || "",
+                          package_offered: company.package_offered || "",
+                          eligibility_criteria: company.eligibility_criteria || "",
+                          bond_details: company.bond_details || "",
+                          job_location: company.job_location || "",
+                          selection_process: company.selection_process || "",
+                        });
+                        setIsEditingJobDetails(false);
+                      }}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : company.registration_status === "Submitted" ? (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-success mb-3">
                       <CheckCircle2 className="h-4 w-4" />
-                      <span className="font-medium">Data Extracted</span>
+                      <span className="font-medium">Data Available</span>
                     </div>
                     
                     {company.job_roles && (
@@ -325,7 +446,7 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                         ) : (
                           <>
                             <Upload className="h-4 w-4 mr-1" />
-                            Re-upload Form
+                            Re-extract from PDF
                           </>
                         )}
                       </Button>
@@ -335,9 +456,9 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-warning">
                       <Clock className="h-4 w-4" />
-                      <span className="font-medium">Form Not Submitted</span>
+                      <span className="font-medium">No Job Details</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">Upload a PDF registration form to extract job details automatically.</p>
+                    <p className="text-sm text-muted-foreground">Upload a PDF or click Edit to add job details manually.</p>
                     <Button
                       variant="outline"
                       size="sm"
@@ -352,7 +473,7 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                       ) : (
                         <>
                           <Upload className="h-4 w-4 mr-1" />
-                          Upload & Extract
+                          Upload & Extract PDF
                         </>
                       )}
                     </Button>

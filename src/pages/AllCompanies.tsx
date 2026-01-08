@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useCompanies, Company } from "@/hooks/useCompanies";
 import { CompanyDetailsPanel } from "@/components/company/CompanyDetailsPanel";
-import { Search, Building2, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { Search, Building2, CheckCircle2, Clock, Loader2, Briefcase, IndianRupee } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -118,9 +118,9 @@ export default function AllCompanies() {
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
                 <TableHead className="font-semibold">Company</TableHead>
-                <TableHead className="font-semibold">Industry</TableHead>
+                <TableHead className="font-semibold">Job Roles</TableHead>
+                <TableHead className="font-semibold">Package</TableHead>
                 <TableHead className="font-semibold">1st POC</TableHead>
-                <TableHead className="font-semibold">2nd POC</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Registration</TableHead>
               </TableRow>
@@ -133,11 +133,34 @@ export default function AllCompanies() {
                   className="cursor-pointer hover:bg-muted/50 transition-colors"
                 >
                   <TableCell>
-                    <span className="font-medium text-card-foreground">{company.name}</span>
+                    <div>
+                      <span className="font-medium text-card-foreground">{company.name}</span>
+                      {company.industry && (
+                        <p className="text-xs text-muted-foreground">{company.industry}</p>
+                      )}
+                    </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{company.industry || "-"}</TableCell>
+                  <TableCell>
+                    {company.job_roles ? (
+                      <div className="flex items-center gap-1 text-sm text-card-foreground">
+                        <Briefcase className="h-3 w-3 text-muted-foreground" />
+                        <span className="max-w-[150px] truncate">{company.job_roles}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {company.package_offered ? (
+                      <div className="flex items-center gap-1 text-sm font-medium text-success">
+                        <IndianRupee className="h-3 w-3" />
+                        <span className="max-w-[120px] truncate">{company.package_offered}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{company.poc_1st}</TableCell>
-                  <TableCell className="text-muted-foreground">{company.poc_2nd || "-"}</TableCell>
                   <TableCell>
                     <Badge
                       variant={company.status === "Active" ? "default" : "destructive"}
