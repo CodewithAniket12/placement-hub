@@ -1,5 +1,8 @@
 import { NavLink } from "@/components/NavLink";
-import { LayoutDashboard, Building2, GraduationCap, Mail } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { LayoutDashboard, Building2, GraduationCap, Mail, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -8,6 +11,14 @@ const navItems = [
 ];
 
 export function AppSidebar() {
+  const { coordinator, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-sidebar">
       <div className="flex h-full flex-col">
@@ -42,12 +53,20 @@ export function AppSidebar() {
         <div className="border-t border-border p-4">
           <div className="flex items-center gap-3 rounded-xl bg-sidebar-muted px-4 py-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-              A
+              {coordinator?.name?.charAt(0) || "?"}
             </div>
             <div className="flex-1 truncate">
-              <p className="text-sm font-medium text-sidebar-foreground">Aniket</p>
+              <p className="text-sm font-medium text-sidebar-foreground">{coordinator?.name || "Unknown"}</p>
               <p className="text-xs text-sidebar-muted-foreground">Coordinator</p>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="h-8 w-8 text-sidebar-muted-foreground hover:text-sidebar-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>

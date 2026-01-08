@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCompanies, Company } from "@/hooks/useCompanies";
+import { useAuth } from "@/contexts/AuthContext";
 import { CompanyCard } from "@/components/company/CompanyCard";
 import { CompanyDetailsPanel } from "@/components/company/CompanyDetailsPanel";
 import { AddCompanyModal } from "@/components/company/AddCompanyModal";
@@ -7,8 +8,6 @@ import { EmailComposeModal } from "@/components/email/EmailComposeModal";
 import { TemplateManagerModal } from "@/components/email/TemplateManagerModal";
 import { Briefcase, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const COORDINATOR_NAME = "Aniket";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -25,6 +24,9 @@ function getGreetingEmoji(): string {
 }
 
 export default function Dashboard() {
+  const { coordinator } = useAuth();
+  const coordinatorName = coordinator?.name || "";
+
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -36,7 +38,7 @@ export default function Dashboard() {
 
   // Filter companies where current user is 1st or 2nd POC
   const assignedCompanies = companies.filter(
-    (c) => c.poc_1st === COORDINATOR_NAME || c.poc_2nd === COORDINATOR_NAME
+    (c) => c.poc_1st === coordinatorName || c.poc_2nd === coordinatorName
   );
 
   const handleCardClick = (company: Company) => {
@@ -64,14 +66,14 @@ export default function Dashboard() {
       {/* Greeting Section */}
       <div className="mb-10">
         <h1 className="text-3xl font-bold text-foreground">
-          {getGreeting()}, {COORDINATOR_NAME}! {getGreetingEmoji()}
+          {getGreeting()}, {coordinatorName}! {getGreetingEmoji()}
         </h1>
         <p className="mt-2 text-lg text-muted-foreground">
           Ready to place some students? Let's get to work.
         </p>
       </div>
 
-      {/* My Assigned Companies Section */}
+      {/* Assigned Companies Section */}
       <div>
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -79,7 +81,7 @@ export default function Dashboard() {
               <Briefcase className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-foreground">My Assigned Companies</h2>
+              <h2 className="text-xl font-semibold text-foreground">Assigned Companies</h2>
               <p className="text-sm text-muted-foreground">
                 {assignedCompanies.length} companies under your management
               </p>
