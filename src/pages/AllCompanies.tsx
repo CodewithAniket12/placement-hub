@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useCompanies, Company } from "@/hooks/useCompanies";
 import { CompanyDetailsPanel } from "@/components/company/CompanyDetailsPanel";
-import { Search, Building2, CheckCircle2, Clock, Loader2, Briefcase, IndianRupee } from "lucide-react";
+import { Search, Building2, CheckCircle2, Clock, Loader2, Briefcase, IndianRupee, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,8 +26,44 @@ export default function AllCompanies() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [registrationFilter, setRegistrationFilter] = useState<string>("all");
+  const [jobRoleFilter, setJobRoleFilter] = useState<string>("all");
+  const [locationFilter, setLocationFilter] = useState<string>("all");
+  const [packageFilter, setPackageFilter] = useState<string>("all");
 
   const { data: companies = [], isLoading } = useCompanies();
+
+  // Extract unique job roles, locations, and package ranges for filter options
+  const filterOptions = useMemo(() => {
+    const roles = new Set<string>();
+    const locations = new Set<string>();
+    
+    companies.forEach((company) => {
+      if (company.job_roles) {
+        company.job_roles.split(/[,;]/).forEach((role) => {
+          const trimmed = role.trim();
+          if (trimmed) roles.add(trimmed);
+        });
+      }
+      if (company.job_location) {
+        company.job_location.split(/[,;]/).forEach((loc) => {
+          const trimmed = loc.trim();
+          if (trimmed) locations.add(trimmed);
+        });
+      }
+    });
+
+    return {
+      roles: Array.from(roles).sort(),
+      locations: Array.from(locations).sort(),
+    };
+  }, [companies]);
+
+  // Helper to parse package value in LPA
+  const parsePackage = (pkg: string | null): number | null => {
+    if (!pkg) return null;
+    const match = pkg.match(/(\d+(?:\.\d+)?)/);
+    return match ? parseFloat(match[1]) : null;
+  };
 
   const filteredCompanies = useMemo(() => {
     return companies.filter((company) => {
@@ -41,9 +77,43 @@ export default function AllCompanies() {
       const matchesRegistration =
         registrationFilter === "all" || company.registration_status === registrationFilter;
 
-      return matchesSearch && matchesStatus && matchesRegistration;
+      // Job role filter
+      const matchesJobRole =
+        jobRoleFilter === "all" ||
+        (company.job_roles?.toLowerCase().includes(jobRoleFilter.toLowerCase()) ?? false);
+
+      // Location filter
+      const matchesLocation =
+        locationFilter === "all" ||
+        (company.job_location?.toLowerCase().includes(locationFilter.toLowerCase()) ?? false);
+
+      // Package filter
+      let matchesPackage = true;
+      if (packageFilter !== "all") {
+        const pkgValue = parsePackage(company.package_offered);
+        if (pkgValue === null) {
+          matchesPackage = false;
+        } else {
+          switch (packageFilter) {
+            case "0-5":
+              matchesPackage = pkgValue <= 5;
+              break;
+            case "5-10":
+              matchesPackage = pkgValue > 5 && pkgValue <= 10;
+              break;
+            case "10-15":
+              matchesPackage = pkgValue > 10 && pkgValue <= 15;
+              break;
+            case "15+":
+              matchesPackage = pkgValue > 15;
+              break;
+          }
+        }
+      }
+
+      return matchesSearch && matchesStatus && matchesRegistration && matchesJobRole && matchesLocation && matchesPackage;
     });
-  }, [companies, searchQuery, statusFilter, registrationFilter]);
+  }, [companies, searchQuery, statusFilter, registrationFilter, jobRoleFilter, locationFilter, packageFilter]);
 
   const handleRowClick = (company: Company) => {
     setSelectedCompany(company);
@@ -70,7 +140,7 @@ export default function AllCompanies() {
       </div>
 
       {/* Filters */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+      <div className="mb-6 flex flex-col gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -80,9 +150,9 @@ export default function AllCompanies() {
             className="pl-10 rounded-xl border-border bg-card"
           />
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px] rounded-xl border-border bg-card">
+            <SelectTrigger className="w-[130px] rounded-xl border-border bg-card">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -92,13 +162,54 @@ export default function AllCompanies() {
             </SelectContent>
           </Select>
           <Select value={registrationFilter} onValueChange={setRegistrationFilter}>
-            <SelectTrigger className="w-[160px] rounded-xl border-border bg-card">
+            <SelectTrigger className="w-[150px] rounded-xl border-border bg-card">
               <SelectValue placeholder="Registration" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Registration</SelectItem>
               <SelectItem value="Submitted">Submitted</SelectItem>
               <SelectItem value="Pending">Pending</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={jobRoleFilter} onValueChange={setJobRoleFilter}>
+            <SelectTrigger className="w-[160px] rounded-xl border-border bg-card">
+              <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Job Role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              {filterOptions.roles.map((role) => (
+                <SelectItem key={role} value={role}>
+                  {role}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={locationFilter} onValueChange={setLocationFilter}>
+            <SelectTrigger className="w-[150px] rounded-xl border-border bg-card">
+              <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {filterOptions.locations.map((loc) => (
+                <SelectItem key={loc} value={loc}>
+                  {loc}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={packageFilter} onValueChange={setPackageFilter}>
+            <SelectTrigger className="w-[150px] rounded-xl border-border bg-card">
+              <IndianRupee className="h-4 w-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Package" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Packages</SelectItem>
+              <SelectItem value="0-5">Up to 5 LPA</SelectItem>
+              <SelectItem value="5-10">5-10 LPA</SelectItem>
+              <SelectItem value="10-15">10-15 LPA</SelectItem>
+              <SelectItem value="15+">15+ LPA</SelectItem>
             </SelectContent>
           </Select>
         </div>
