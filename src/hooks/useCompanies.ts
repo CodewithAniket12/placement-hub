@@ -8,6 +8,7 @@ export interface Company {
   industry: string | null;
   status: "Active" | "Blacklisted";
   registration_status: "Submitted" | "Pending";
+  registration_form_url: string | null;
   poc_1st: string;
   poc_2nd: string | null;
   hr_name: string | null;
@@ -125,6 +126,47 @@ export function useBlacklistCompany() {
           notes: reason 
         })
         .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+    },
+  });
+}
+
+export function useUploadRegistrationForm() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ companyId, file }: { companyId: string; file: File }) => {
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${companyId}/${Date.now()}.${fileExt}`;
+      
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from("registration-forms")
+        .upload(fileName, file, { upsert: true });
+      
+      if (uploadError) throw uploadError;
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("registration-forms")
+        .getPublicUrl(fileName);
+      
+      // Update company with form URL and status
+      const { data, error } = await supabase
+        .from("companies")
+        .update({ 
+          registration_form_url: publicUrl,
+          registration_status: "Submitted"
+        })
+        .eq("id", companyId)
         .select()
         .single();
       

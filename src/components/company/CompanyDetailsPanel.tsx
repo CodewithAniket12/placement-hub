@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { Company, useUpdateCompanyNotes, useUpdateCompany, useDeleteCompany, useBlacklistCompany } from "@/hooks/useCompanies";
-import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil, Trash2, Ban } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Company, useUpdateCompanyNotes, useUpdateCompany, useDeleteCompany, useBlacklistCompany, useUploadRegistrationForm } from "@/hooks/useCompanies";
+import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil, Trash2, Ban, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,6 +50,8 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
   const updateCompany = useUpdateCompany();
   const deleteCompany = useDeleteCompany();
   const blacklistCompany = useBlacklistCompany();
+  const uploadRegistrationForm = useUploadRegistrationForm();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync state when company changes
   useEffect(() => {
@@ -137,6 +139,22 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !company) return;
+    
+    try {
+      await uploadRegistrationForm.mutateAsync({ companyId: company.id, file });
+      toast({ title: "Registration form uploaded successfully!" });
+    } catch (error) {
+      toast({ title: "Failed to upload form", variant: "destructive" });
+    }
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <>
       {/* Backdrop */}
@@ -213,6 +231,69 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                     </span>
                   )}
                 </Badge>
+              </div>
+            </div>
+
+            {/* Registration Form Section */}
+            <div className="mb-6">
+              <h3 className="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Registration Form
+              </h3>
+              <div className="rounded-xl border border-border bg-muted/50 p-4">
+                {company.registration_form_url ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-success">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span className="font-medium">Form Uploaded</span>
+                    </div>
+                    <a
+                      href={company.registration_form_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      <FileText className="h-4 w-4" />
+                      View Registration Form
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                    <div className="pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadRegistrationForm.isPending}
+                      >
+                        <Upload className="h-4 w-4 mr-1" />
+                        {uploadRegistrationForm.isPending ? "Uploading..." : "Replace Form"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-warning">
+                      <Clock className="h-4 w-4" />
+                      <span className="font-medium">Form Not Submitted</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Upload the registration form from the company.</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadRegistrationForm.isPending}
+                    >
+                      <Upload className="h-4 w-4 mr-1" />
+                      {uploadRegistrationForm.isPending ? "Uploading..." : "Upload Form"}
+                    </Button>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                />
               </div>
             </div>
 

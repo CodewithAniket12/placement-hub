@@ -26,6 +26,7 @@ export type Database = {
           notes: string | null
           poc_1st: string
           poc_2nd: string | null
+          registration_form_url: string | null
           registration_status: string
           status: string
           updated_at: string
@@ -42,6 +43,7 @@ export type Database = {
           notes?: string | null
           poc_1st: string
           poc_2nd?: string | null
+          registration_form_url?: string | null
           registration_status?: string
           status?: string
           updated_at?: string
@@ -58,6 +60,7 @@ export type Database = {
           notes?: string | null
           poc_1st?: string
           poc_2nd?: string | null
+          registration_form_url?: string | null
           registration_status?: string
           status?: string
           updated_at?: string
