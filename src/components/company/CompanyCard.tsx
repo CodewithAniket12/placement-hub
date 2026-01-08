@@ -1,4 +1,5 @@
 import { Company } from "@/hooks/useCompanies";
+import { useAuth } from "@/contexts/AuthContext";
 import { Mail, CheckCircle2, Clock, Phone, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,12 @@ interface CompanyCardProps {
 }
 
 export function CompanyCard({ company, onCardClick, onMailClick }: CompanyCardProps) {
+  const { coordinator } = useAuth();
+  const coordinatorName = coordinator?.name || "";
+  
+  const isPrimaryPOC = company.poc_1st === coordinatorName;
+  const isSecondaryPOC = company.poc_2nd === coordinatorName;
+
   const handleMailClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (company.hr_email) {
@@ -35,6 +42,19 @@ export function CompanyCard({ company, onCardClick, onMailClick }: CompanyCardPr
           <h3 className="text-lg font-semibold text-card-foreground group-hover:text-primary transition-colors">
             {company.name}
           </h3>
+          {/* POC Role Indicator */}
+          <div className="mt-1">
+            {isPrimaryPOC && (
+              <Badge className="bg-primary/10 text-primary border-0 text-xs">
+                1st POC
+              </Badge>
+            )}
+            {isSecondaryPOC && (
+              <Badge className="bg-secondary text-secondary-foreground border-0 text-xs">
+                2nd POC
+              </Badge>
+            )}
+          </div>
         </div>
         <Badge
           variant={company.status === "Active" ? "default" : "destructive"}
