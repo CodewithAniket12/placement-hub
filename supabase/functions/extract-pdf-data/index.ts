@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,15 +22,17 @@ serve(async (req) => {
       );
     }
 
-    // Convert file to base64
+    // Convert file to base64 using Deno's built-in encoder (handles large files)
     const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const base64 = base64Encode(arrayBuffer);
     const dataUrl = `data:application/pdf;base64,${base64}`;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
+
+    console.log('Sending PDF to AI for extraction, size:', arrayBuffer.byteLength);
 
     // Use Lovable AI to extract data from PDF
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -111,7 +114,7 @@ Return ONLY valid JSON with these exact field names. Use null for fields not fou
     }
 
     const data = await response.json();
-    console.log('AI response:', JSON.stringify(data));
+    console.log('AI response received');
 
     // Extract the function call arguments
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
