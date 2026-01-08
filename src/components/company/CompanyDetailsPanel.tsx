@@ -243,7 +243,7 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
             {/* Status Section */}
             <div className="mb-6">
               <h3 className="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide">Status</h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
                 <Badge
                   variant={company.status === "Active" ? "default" : "destructive"}
                   className={
@@ -254,25 +254,42 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                 >
                   {company.status}
                 </Badge>
-                <Badge
-                  className={
-                    company.registration_status === "Submitted"
-                      ? "bg-success/10 text-success hover:bg-success/20 border-0"
-                      : "bg-warning/10 text-warning hover:bg-warning/20 border-0"
-                  }
+                <Select
+                  value={company.registration_status}
+                  onValueChange={async (value: string) => {
+                    try {
+                      await updateCompany.mutateAsync({
+                        id: company.id,
+                        registration_status: value as "Pending" | "Submitted",
+                      });
+                      toast({ title: `Registration status updated to ${value}` });
+                    } catch (error) {
+                      toast({ title: "Failed to update status", variant: "destructive" });
+                    }
+                  }}
                 >
-                  {company.registration_status === "Submitted" ? (
-                    <span className="flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Form Submitted
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Form Pending
-                    </span>
-                  )}
-                </Badge>
+                  <SelectTrigger className={`w-[160px] h-7 text-xs border-0 ${
+                    company.registration_status === "Submitted"
+                      ? "bg-success/10 text-success"
+                      : "bg-warning/10 text-warning"
+                  }`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Form Pending
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="Submitted">
+                      <span className="flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Form Submitted
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
