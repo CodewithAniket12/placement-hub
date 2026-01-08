@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Company, useUpdateCompanyNotes, useUpdateCompany, useDeleteCompany, useBlacklistCompany, useUploadRegistrationForm } from "@/hooks/useCompanies";
-import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil, Trash2, Ban, Upload, FileText, Download } from "lucide-react";
+import { Company, useUpdateCompanyNotes, useUpdateCompany, useDeleteCompany, useBlacklistCompany, useExtractAndSaveFormData } from "@/hooks/useCompanies";
+import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil, Trash2, Ban, Upload, FileText, Briefcase, MapPin, GraduationCap, FileCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,7 +50,7 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
   const updateCompany = useUpdateCompany();
   const deleteCompany = useDeleteCompany();
   const blacklistCompany = useBlacklistCompany();
-  const uploadRegistrationForm = useUploadRegistrationForm();
+  const extractFormData = useExtractAndSaveFormData();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync state when company changes
@@ -144,10 +144,14 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
     if (!file || !company) return;
     
     try {
-      await uploadRegistrationForm.mutateAsync({ companyId: company.id, file });
-      toast({ title: "Registration form uploaded successfully!" });
+      await extractFormData.mutateAsync({ companyId: company.id, file });
+      toast({ title: "Registration form data extracted successfully!" });
     } catch (error) {
-      toast({ title: "Failed to upload form", variant: "destructive" });
+      toast({ 
+        title: "Failed to extract form data", 
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive" 
+      });
     }
     // Reset file input
     if (fileInputRef.current) {
@@ -234,36 +238,96 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
               </div>
             </div>
 
-            {/* Registration Form Section */}
+            {/* Registration Form Data Section */}
             <div className="mb-6">
               <h3 className="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Registration Form
+                Registration Form Data
               </h3>
               <div className="rounded-xl border border-border bg-muted/50 p-4">
-                {company.registration_form_url ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-success">
+                {company.registration_status === "Submitted" ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-success mb-3">
                       <CheckCircle2 className="h-4 w-4" />
-                      <span className="font-medium">Form Uploaded</span>
+                      <span className="font-medium">Data Extracted</span>
                     </div>
-                    <a
-                      href={company.registration_form_url}
-                      download
-                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download Registration Form
-                    </a>
-                    <div className="pt-2">
+                    
+                    {company.job_roles && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                          <Briefcase className="h-3 w-3" />
+                          Job Roles
+                        </div>
+                        <p className="text-sm text-card-foreground">{company.job_roles}</p>
+                      </div>
+                    )}
+                    
+                    {company.package_offered && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                          <FileCheck className="h-3 w-3" />
+                          Package Offered
+                        </div>
+                        <p className="text-sm text-card-foreground">{company.package_offered}</p>
+                      </div>
+                    )}
+                    
+                    {company.eligibility_criteria && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                          <GraduationCap className="h-3 w-3" />
+                          Eligibility Criteria
+                        </div>
+                        <p className="text-sm text-card-foreground">{company.eligibility_criteria}</p>
+                      </div>
+                    )}
+                    
+                    {company.job_location && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                          <MapPin className="h-3 w-3" />
+                          Location
+                        </div>
+                        <p className="text-sm text-card-foreground">{company.job_location}</p>
+                      </div>
+                    )}
+                    
+                    {company.bond_details && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                          Bond Details
+                        </div>
+                        <p className="text-sm text-card-foreground">{company.bond_details}</p>
+                      </div>
+                    )}
+                    
+                    {company.selection_process && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                          Selection Process
+                        </div>
+                        <p className="text-sm text-card-foreground">{company.selection_process}</p>
+                      </div>
+                    )}
+                    
+                    <div className="pt-2 border-t border-border">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadRegistrationForm.isPending}
+                        disabled={extractFormData.isPending}
                       >
-                        <Upload className="h-4 w-4 mr-1" />
-                        {uploadRegistrationForm.isPending ? "Uploading..." : "Replace Form"}
+                        {extractFormData.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            Extracting...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-1" />
+                            Re-upload Form
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -273,15 +337,24 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                       <Clock className="h-4 w-4" />
                       <span className="font-medium">Form Not Submitted</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">Upload the registration form from the company.</p>
+                    <p className="text-sm text-muted-foreground">Upload a PDF registration form to extract job details automatically.</p>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadRegistrationForm.isPending}
+                      disabled={extractFormData.isPending}
                     >
-                      <Upload className="h-4 w-4 mr-1" />
-                      {uploadRegistrationForm.isPending ? "Uploading..." : "Upload Form"}
+                      {extractFormData.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          Extracting...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-1" />
+                          Upload & Extract
+                        </>
+                      )}
                     </Button>
                   </div>
                 )}
@@ -289,7 +362,7 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileUpload}
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf"
                   className="hidden"
                 />
               </div>
