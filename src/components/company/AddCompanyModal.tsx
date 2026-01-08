@@ -58,6 +58,7 @@ export function AddCompanyModal({ isOpen, onClose }: AddCompanyModalProps) {
         notes: formData.notes.trim() || null,
         status: formData.status,
         registration_status: formData.registration_status,
+        registration_form_url: null,
       });
 
       toast({ title: "Company added successfully!" });
