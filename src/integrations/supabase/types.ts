@@ -16,52 +16,67 @@ export type Database = {
     Tables: {
       companies: {
         Row: {
+          bond_details: string | null
           created_at: string
+          eligibility_criteria: string | null
           hr_email: string | null
           hr_name: string | null
           hr_phone: string | null
           id: string
           industry: string | null
+          job_location: string | null
+          job_roles: string | null
           name: string
           notes: string | null
+          package_offered: string | null
           poc_1st: string
           poc_2nd: string | null
-          registration_form_url: string | null
           registration_status: string
+          selection_process: string | null
           status: string
           updated_at: string
           website: string | null
         }
         Insert: {
+          bond_details?: string | null
           created_at?: string
+          eligibility_criteria?: string | null
           hr_email?: string | null
           hr_name?: string | null
           hr_phone?: string | null
           id?: string
           industry?: string | null
+          job_location?: string | null
+          job_roles?: string | null
           name: string
           notes?: string | null
+          package_offered?: string | null
           poc_1st: string
           poc_2nd?: string | null
-          registration_form_url?: string | null
           registration_status?: string
+          selection_process?: string | null
           status?: string
           updated_at?: string
           website?: string | null
         }
         Update: {
+          bond_details?: string | null
           created_at?: string
+          eligibility_criteria?: string | null
           hr_email?: string | null
           hr_name?: string | null
           hr_phone?: string | null
           id?: string
           industry?: string | null
+          job_location?: string | null
+          job_roles?: string | null
           name?: string
           notes?: string | null
+          package_offered?: string | null
           poc_1st?: string
           poc_2nd?: string | null
-          registration_form_url?: string | null
           registration_status?: string
+          selection_process?: string | null
           status?: string
           updated_at?: string
           website?: string | null

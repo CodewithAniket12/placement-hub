@@ -8,13 +8,18 @@ export interface Company {
   industry: string | null;
   status: "Active" | "Blacklisted";
   registration_status: "Submitted" | "Pending";
-  registration_form_url: string | null;
   poc_1st: string;
   poc_2nd: string | null;
   hr_name: string | null;
   hr_phone: string | null;
   hr_email: string | null;
   notes: string | null;
+  job_roles: string | null;
+  package_offered: string | null;
+  eligibility_criteria: string | null;
+  bond_details: string | null;
+  job_location: string | null;
+  selection_process: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -138,32 +143,48 @@ export function useBlacklistCompany() {
   });
 }
 
-export function useUploadRegistrationForm() {
+export interface ExtractedFormData {
+  job_roles: string | null;
+  package_offered: string | null;
+  eligibility_criteria: string | null;
+  bond_details: string | null;
+  job_location: string | null;
+  selection_process: string | null;
+}
+
+export function useExtractAndSaveFormData() {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async ({ companyId, file }: { companyId: string; file: File }) => {
-      // Create unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${companyId}/${Date.now()}.${fileExt}`;
+      // Send file to edge function for extraction
+      const formData = new FormData();
+      formData.append('file', file);
       
-      // Upload file to storage
-      const { error: uploadError } = await supabase.storage
-        .from("registration-forms")
-        .upload(fileName, file, { upsert: true });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-pdf-data`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: formData,
+        }
+      );
       
-      if (uploadError) throw uploadError;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to extract data');
+      }
       
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("registration-forms")
-        .getPublicUrl(fileName);
+      const result = await response.json();
+      const extractedData = result.data as ExtractedFormData;
       
-      // Update company with form URL and status
+      // Update company with extracted data
       const { data, error } = await supabase
         .from("companies")
         .update({ 
-          registration_form_url: publicUrl,
+          ...extractedData,
           registration_status: "Submitted"
         })
         .eq("id", companyId)
