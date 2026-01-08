@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Company, useUpdateCompanyNotes, useUpdateCompany, useDeleteCompany, useBlacklistCompany, useUploadRegistrationForm } from "@/hooks/useCompanies";
-import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil, Trash2, Ban, Upload, FileText } from "lucide-react";
+import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil, Trash2, Ban, Upload, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -249,13 +249,11 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                     </div>
                     <a
                       href={company.registration_form_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      download
                       className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
                     >
-                      <FileText className="h-4 w-4" />
-                      View Registration Form
-                      <ExternalLink className="h-3 w-3" />
+                      <Download className="h-4 w-4" />
+                      Download Registration Form
                     </a>
                     <div className="pt-2">
                       <Button
