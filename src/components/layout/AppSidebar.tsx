@@ -1,18 +1,14 @@
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
-import { LayoutDashboard, Building2, GraduationCap, Mail, LogOut, ListTodo, Shield } from "lucide-react";
+import { Building2, GraduationCap, Mail, LogOut, ListTodo, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Admin Panel", url: "/", icon: Shield },
   { title: "All Companies", url: "/companies", icon: Building2 },
   { title: "Tasks", url: "/tasks", icon: ListTodo },
   { title: "Email History", url: "/email-history", icon: Mail },
-];
-
-const adminNavItems = [
-  { title: "Admin Panel", url: "/admin", icon: Shield },
 ];
 
 export function AppSidebar() {
@@ -52,24 +48,6 @@ export function AppSidebar() {
               {item.title}
             </NavLink>
           ))}
-          
-          {/* Admin-only navigation */}
-          {coordinator?.name?.toLowerCase() === "admin" && (
-            <>
-              <div className="my-3 border-t border-border" />
-              {adminNavItems.map((item) => (
-                <NavLink
-                  key={item.title}
-                  to={item.url}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-sidebar-muted-foreground transition-all hover:bg-sidebar-muted hover:text-sidebar-foreground"
-                  activeClassName="bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.title}
-                </NavLink>
-              ))}
-            </>
-          )}
         </nav>
 
         {/* Footer */}

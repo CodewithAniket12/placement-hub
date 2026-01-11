@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MainLayout } from "@/components/layout/MainLayout";
-import Dashboard from "./pages/Dashboard";
 import AllCompanies from "./pages/AllCompanies";
 import EmailHistory from "./pages/EmailHistory";
 import Tasks from "./pages/Tasks";
@@ -32,11 +31,10 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<Admin />} />
               <Route path="/companies" element={<AllCompanies />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/email-history" element={<EmailHistory />} />
-              <Route path="/admin" element={<Admin />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
