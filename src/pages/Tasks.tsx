@@ -9,8 +9,8 @@ import { Plus, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Tasks() {
-  const { coordinator } = useAuth();
-  const { data: tasks, isLoading } = useTasks(coordinator?.name);
+  const { profile } = useAuth();
+  const { data: tasks, isLoading } = useTasks(profile?.display_name);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 

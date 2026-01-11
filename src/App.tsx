@@ -6,11 +6,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MainLayout } from "@/components/layout/MainLayout";
+import Dashboard from "./pages/Dashboard";
 import AllCompanies from "./pages/AllCompanies";
 import EmailHistory from "./pages/EmailHistory";
 import Tasks from "./pages/Tasks";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Pending from "./pages/Pending";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +27,8 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/pending" element={<Pending />} />
             <Route
               element={
                 <ProtectedRoute>
@@ -32,6 +37,7 @@ const App = () => (
               }
             >
               <Route path="/" element={<Admin />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/companies" element={<AllCompanies />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/email-history" element={<EmailHistory />} />

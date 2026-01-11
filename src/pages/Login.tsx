@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { GraduationCap, LogIn } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -12,27 +12,27 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    setTimeout(() => {
-      const success = login(username, password);
-      if (success) {
-        toast({ title: "Welcome back!", description: `Signed in as ${username}` });
-        navigate("/");
-      } else {
-        toast({
-          title: "Login failed",
-          description: "Invalid username or password",
-          variant: "destructive",
-        });
-      }
-      setIsLoading(false);
-    }, 300);
+    const { error } = await signIn(username, password);
+    
+    if (error) {
+      toast({
+        title: "Login failed",
+        description: error,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Welcome back!", description: `Signed in successfully` });
+      navigate("/");
+    }
+    
+    setIsLoading(false);
   };
 
   return (
@@ -52,7 +52,7 @@ export default function Login() {
               <Input
                 id="username"
                 type="text"
-                placeholder="Enter your name"
+                placeholder="Enter your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -75,6 +75,14 @@ export default function Login() {
             </Button>
           </form>
         </CardContent>
+        <CardFooter className="flex justify-center">
+          <p className="text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-primary hover:underline font-medium">
+              Request Access
+            </Link>
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );
