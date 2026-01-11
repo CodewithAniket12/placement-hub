@@ -1,15 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface Task {
+export interface CampusDrive {
   id: string;
-  company_id: string | null;
+  company_id: string;
   coordinator_name: string;
-  title: string;
-  description: string | null;
-  due_date: string;
-  status: "pending" | "in_progress" | "completed";
-  priority: "low" | "medium" | "high";
+  drive_date: string;
+  drive_time: string | null;
+  venue: string | null;
+  min_cgpa: number | null;
+  eligible_branches: string | null;
+  registered_count: number | null;
+  appeared_count: number | null;
+  selected_count: number | null;
+  status: string;
+  notes: string | null;
   created_at: string;
   updated_at: string;
   company?: {
@@ -17,38 +22,38 @@ export interface Task {
   };
 }
 
-export function useTasks(coordinatorName?: string) {
+export function useCampusDrives(companyId?: string) {
   return useQuery({
-    queryKey: ["tasks", coordinatorName],
+    queryKey: ["campus-drives", companyId],
     queryFn: async () => {
       let query = supabase
-        .from("tasks")
+        .from("campus_drives")
         .select(`
           *,
           company:companies(name)
         `)
-        .order("due_date", { ascending: true });
+        .order("drive_date", { ascending: true });
       
-      if (coordinatorName) {
-        query = query.eq("coordinator_name", coordinatorName);
+      if (companyId) {
+        query = query.eq("company_id", companyId);
       }
       
       const { data, error } = await query;
       
       if (error) throw error;
-      return data as Task[];
+      return data as CampusDrive[];
     },
   });
 }
 
-export function useCreateTask() {
+export function useCreateCampusDrive() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (task: Omit<Task, "id" | "created_at" | "updated_at" | "company">) => {
+    mutationFn: async (drive: Omit<CampusDrive, "id" | "created_at" | "updated_at" | "company">) => {
       const { data, error } = await supabase
-        .from("tasks")
-        .insert(task)
+        .from("campus_drives")
+        .insert(drive)
         .select()
         .single();
       
@@ -56,18 +61,18 @@ export function useCreateTask() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["campus-drives"] });
     },
   });
 }
 
-export function useUpdateTask() {
+export function useUpdateCampusDrive() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Task> & { id: string }) => {
+    mutationFn: async ({ id, ...updates }: Partial<CampusDrive> & { id: string }) => {
       const { data, error } = await supabase
-        .from("tasks")
+        .from("campus_drives")
         .update(updates)
         .eq("id", id)
         .select()
@@ -77,25 +82,25 @@ export function useUpdateTask() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["campus-drives"] });
     },
   });
 }
 
-export function useDeleteTask() {
+export function useDeleteCampusDrive() {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("tasks")
+        .from("campus_drives")
         .delete()
         .eq("id", id);
       
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["campus-drives"] });
     },
   });
 }

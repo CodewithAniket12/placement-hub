@@ -8,7 +8,7 @@ const navItems = [
   { title: "Admin Panel", url: "/admin", icon: Shield, adminOnly: true },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, coordinatorOnly: true },
   { title: "All Companies", url: "/companies", icon: Building2 },
-  { title: "Tasks", url: "/tasks", icon: ListTodo },
+  { title: "Scheduling", url: "/tasks", icon: ListTodo, adminOnly: true },
   { title: "Email History", url: "/email-history", icon: Mail },
 ];
 
