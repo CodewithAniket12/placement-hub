@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useCompanies, Company } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
 import { CompanyCard } from "@/components/company/CompanyCard";
@@ -24,7 +25,12 @@ function getGreetingEmoji(): string {
 }
 
 export default function Dashboard() {
-  const { profile } = useAuth();
+  const { profile, isAdmin } = useAuth();
+  
+  // Redirect admins to admin panel
+  if (isAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
   const coordinatorName = profile?.display_name || "";
 
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
