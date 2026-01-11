@@ -721,7 +721,7 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                   variant="outline"
                   size="sm"
                   onClick={() => setShowAddTaskModal(true)}
-                  className="text-primary border-primary/30 hover:bg-primary/10"
+                  className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
                 >
                   <CalendarPlus className="h-4 w-4 mr-1" />
                   Add Follow-up
@@ -731,7 +731,7 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                     variant="outline"
                     size="sm"
                     onClick={() => setShowBlacklistDialog(true)}
-                    className="text-warning border-warning/30 hover:bg-warning/10"
+                    className="border-warning/50 text-warning hover:bg-warning hover:text-warning-foreground transition-colors"
                   >
                     <Ban className="h-4 w-4 mr-1" />
                     Blacklist
@@ -741,7 +741,7 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                   variant="outline"
                   size="sm"
                   onClick={() => setShowDeleteDialog(true)}
-                  className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                  className="border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
                   Delete
