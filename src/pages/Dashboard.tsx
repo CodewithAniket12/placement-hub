@@ -33,6 +33,7 @@ export default function Dashboard() {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false);
   const [emailCompany, setEmailCompany] = useState<Company | null>(null);
+  const [emailOverride, setEmailOverride] = useState<{ email?: string; hrName?: string }>({});
 
   const { data: companies = [], isLoading } = useCompanies();
 
@@ -125,8 +126,9 @@ export default function Dashboard() {
         company={selectedCompany}
         isOpen={isPanelOpen}
         onClose={handlePanelClose}
-        onSendEmail={(company) => {
+        onSendEmail={(company, overrideEmail, overrideHrName) => {
           setEmailCompany(company);
+          setEmailOverride({ email: overrideEmail, hrName: overrideHrName });
           setIsEmailModalOpen(true);
         }}
       />
@@ -134,9 +136,14 @@ export default function Dashboard() {
       {/* Email Compose Modal */}
       <EmailComposeModal
         isOpen={isEmailModalOpen}
-        onClose={() => setIsEmailModalOpen(false)}
+        onClose={() => {
+          setIsEmailModalOpen(false);
+          setEmailOverride({});
+        }}
         company={emailCompany}
         onManageTemplates={handleManageTemplates}
+        overrideEmail={emailOverride.email}
+        overrideHrName={emailOverride.hrName}
       />
 
       {/* Template Manager Modal */}
