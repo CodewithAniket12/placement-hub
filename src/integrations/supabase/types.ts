@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_dates: {
+        Row: {
+          created_at: string
+          created_by: string
+          end_date: string
+          id: string
+          reason: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          end_date: string
+          id?: string
+          reason: string
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          end_date?: string
+          id?: string
+          reason?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       campus_drives: {
         Row: {
           appeared_count: number | null
@@ -239,6 +269,53 @@ export type Database = {
           phone?: string
         }
         Relationships: []
+      }
+      date_requests: {
+        Row: {
+          admin_response: string | null
+          company_id: string | null
+          coordinator_name: string
+          created_at: string
+          description: string
+          id: string
+          requested_date: string
+          responded_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_response?: string | null
+          company_id?: string | null
+          coordinator_name: string
+          created_at?: string
+          description: string
+          id?: string
+          requested_date: string
+          responded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_response?: string | null
+          company_id?: string | null
+          coordinator_name?: string
+          created_at?: string
+          description?: string
+          id?: string
+          requested_date?: string
+          responded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "date_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_logs: {
         Row: {
