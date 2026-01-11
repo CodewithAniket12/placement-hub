@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { title: "Admin Panel", url: "/", icon: Shield, adminOnly: true },
+  { title: "Admin Panel", url: "/admin", icon: Shield, adminOnly: true },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, adminOnly: false },
   { title: "All Companies", url: "/companies", icon: Building2, adminOnly: false },
   { title: "Tasks", url: "/tasks", icon: ListTodo, adminOnly: false },
@@ -46,7 +46,7 @@ export function AppSidebar() {
             <NavLink
               key={item.title}
               to={item.url}
-              end={item.url === "/" || item.url === "/dashboard"}
+              end={item.url === "/admin" || item.url === "/dashboard"}
               className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-sidebar-muted-foreground transition-all hover:bg-sidebar-muted hover:text-sidebar-foreground"
               activeClassName="bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
             >
