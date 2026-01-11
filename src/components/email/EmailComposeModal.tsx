@@ -165,10 +165,13 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates,
     
     setIsGenerating(true);
     try {
+      // Use override name if sending to a specific contact, else company hr_name
+      const recipientName = overrideHrName || company.hr_name;
+      
       const { data, error } = await supabase.functions.invoke("generate-email", {
         body: {
           companyName: company.name,
-          hrName: company.hr_name,
+          hrName: recipientName,
           purpose: aiPurpose || "Campus recruitment invitation - requesting the company to participate in our campus placement drive.",
           senderName: selectedCoordinator.name,
           senderPhone: selectedCoordinator.phone
@@ -211,8 +214,8 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates,
 
     const template = templates.find((t) => t.id === selectedTemplateId);
     
-    // Validate required fields if template is selected
-    if (template) {
+    // Skip template validation if AI generated
+    if (template && !isAiGenerated) {
       const missingRequired = template.placeholders
         .filter((p) => p.required && !placeholderValues[p.key])
         .map((p) => p.label);
