@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Company, useUpdateCompanyNotes, useUpdateCompany, useDeleteCompany, useBlacklistCompany, useExtractAndSaveFormData } from "@/hooks/useCompanies";
 import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil, Trash2, Ban, Upload, FileText, Briefcase, MapPin, GraduationCap, FileCheck, Loader2, CalendarPlus } from "lucide-react";
-import { AddTaskModal } from "@/components/tasks/AddTaskModal";
+import { ScheduleDriveModal } from "@/components/scheduling/ScheduleDriveModal";
 import { ContactsSection } from "@/components/company/ContactsSection";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +55,7 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showBlacklistDialog, setShowBlacklistDialog] = useState(false);
   const [showEmailConfirmDialog, setShowEmailConfirmDialog] = useState(false);
-  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  const [showScheduleDriveModal, setShowScheduleDriveModal] = useState(false);
   const [blacklistReason, setBlacklistReason] = useState("");
   
   const updateNotes = useUpdateCompanyNotes();
@@ -745,11 +745,11 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowAddTaskModal(true)}
+                  onClick={() => setShowScheduleDriveModal(true)}
                   className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
                 >
                   <CalendarPlus className="h-4 w-4 mr-1" />
-                  Add Follow-up
+                  Schedule Drive
                 </Button>
                 {company.status !== "Blacklisted" && (
                   <Button
@@ -861,11 +861,12 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Add Task Modal */}
-      <AddTaskModal
-        isOpen={showAddTaskModal}
-        onClose={() => setShowAddTaskModal(false)}
-        preselectedCompanyId={company.id}
+      {/* Schedule Drive Modal */}
+      <ScheduleDriveModal
+        isOpen={showScheduleDriveModal}
+        onClose={() => setShowScheduleDriveModal(false)}
+        companyId={company.id}
+        companyName={company.name}
       />
     </>
   );
