@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,13 @@ export function AddTaskModal({ isOpen, onClose, preselectedCompanyId }: AddTaskM
   const [companyId, setCompanyId] = useState(preselectedCompanyId || "");
   const [dueDate, setDueDate] = useState<Date>();
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+
+  // Sync companyId when preselectedCompanyId changes
+  useEffect(() => {
+    if (preselectedCompanyId) {
+      setCompanyId(preselectedCompanyId);
+    }
+  }, [preselectedCompanyId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,9 +75,9 @@ export function AddTaskModal({ isOpen, onClose, preselectedCompanyId }: AddTaskM
     onClose();
   };
 
-  return (
+  const modalContent = (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] z-[100]">
         <DialogHeader>
           <DialogTitle>Add New Task</DialogTitle>
         </DialogHeader>
@@ -103,7 +111,7 @@ export function AddTaskModal({ isOpen, onClose, preselectedCompanyId }: AddTaskM
               <SelectTrigger>
                 <SelectValue placeholder="Select a company" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[110]">
                 <SelectItem value="none">No company</SelectItem>
                 {companies?.map((company) => (
                   <SelectItem key={company.id} value={company.id}>
@@ -121,6 +129,7 @@ export function AddTaskModal({ isOpen, onClose, preselectedCompanyId }: AddTaskM
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
+                    type="button"
                     className={cn(
                       "w-full justify-start text-left font-normal",
                       !dueDate && "text-muted-foreground"
@@ -130,7 +139,7 @@ export function AddTaskModal({ isOpen, onClose, preselectedCompanyId }: AddTaskM
                     {dueDate ? format(dueDate, "PPP") : "Pick a date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 z-[110]" align="start">
                   <Calendar
                     mode="single"
                     selected={dueDate}
@@ -147,7 +156,7 @@ export function AddTaskModal({ isOpen, onClose, preselectedCompanyId }: AddTaskM
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[110]">
                   <SelectItem value="low">Low</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="high">High</SelectItem>
@@ -168,4 +177,7 @@ export function AddTaskModal({ isOpen, onClose, preselectedCompanyId }: AddTaskM
       </DialogContent>
     </Dialog>
   );
+
+  // Use portal to render outside the panel's z-index context
+  return createPortal(modalContent, document.body);
 }
