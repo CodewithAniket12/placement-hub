@@ -44,7 +44,7 @@ export function AddTaskModal({ isOpen, onClose, preselectedCompanyId }: AddTaskM
       await createTask.mutateAsync({
         title,
         description: description || null,
-        company_id: companyId || null,
+        company_id: companyId === "none" ? null : companyId || null,
         coordinator_name: coordinator.name,
         due_date: dueDate.toISOString(),
         status: "pending",
@@ -99,12 +99,12 @@ export function AddTaskModal({ isOpen, onClose, preselectedCompanyId }: AddTaskM
 
           <div className="space-y-2">
             <Label>Company (Optional)</Label>
-            <Select value={companyId} onValueChange={setCompanyId}>
+            <Select value={companyId || "none"} onValueChange={setCompanyId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a company" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No company</SelectItem>
+                <SelectItem value="none">No company</SelectItem>
                 {companies?.map((company) => (
                   <SelectItem key={company.id} value={company.id}>
                     {company.name}
