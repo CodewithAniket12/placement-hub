@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateCampusDrive, useCampusDrives } from "@/hooks/useCampusDrives";
+import { useCreateCampusDrive, useCampusDrives, useDeleteCampusDrive } from "@/hooks/useCampusDrives";
 import { useBlockedDates } from "@/hooks/useBlockedDates";
 import { BlockedDateRequestModal } from "@/components/scheduling/BlockedDateRequestModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { CalendarIcon, AlertTriangle, Lock } from "lucide-react";
+import { CalendarIcon, AlertTriangle, Lock, Unlock } from "lucide-react";
 import { format, isWithinInterval, parseISO, isSameDay } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -27,9 +27,10 @@ interface ScheduleDriveModalProps {
 export function ScheduleDriveModal({ isOpen, onClose, companyId, companyName }: ScheduleDriveModalProps) {
   const { profile } = useAuth();
   const createDrive = useCreateCampusDrive();
+  const deleteDrive = useDeleteCampusDrive();
   const { data: blockedDates } = useBlockedDates();
   const { data: allDrives } = useCampusDrives();
-  
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [driveDate, setDriveDate] = useState<Date>();
   const [driveTime, setDriveTime] = useState("");
   const [venue, setVenue] = useState("");
@@ -40,6 +41,13 @@ export function ScheduleDriveModal({ isOpen, onClose, companyId, companyName }: 
   const scheduledDrives = allDrives?.filter(d => 
     d.status === "scheduled" && d.company_id !== companyId
   ) || [];
+
+  // Get my locked drives for this company
+  const myLockedDrive = allDrives?.find(d => 
+    d.status === "scheduled" && 
+    d.company_id === companyId && 
+    d.coordinator_name === profile?.display_name
+  );
 
   // Check if selected date falls within a blocked period
   const getBlockedDateConflict = (date: Date | undefined) => {
@@ -64,6 +72,18 @@ export function ScheduleDriveModal({ isOpen, onClose, companyId, companyName }: 
 
   const blockedConflict = getBlockedDateConflict(driveDate);
   const lockedConflict = getLockedDriveConflict(driveDate);
+
+  // Handle unlocking own date
+  const handleUnlock = async () => {
+    if (!myLockedDrive) return;
+    
+    try {
+      await deleteDrive.mutateAsync(myLockedDrive.id);
+      toast.success("Date unlocked successfully");
+    } catch (error) {
+      toast.error("Failed to unlock date");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,6 +165,28 @@ export function ScheduleDriveModal({ isOpen, onClose, companyId, companyName }: 
           </DialogDescription>
         </DialogHeader>
         
+        {/* Show currently locked drive info with unlock option */}
+        {myLockedDrive && (
+          <Alert className="border-primary/30 bg-primary/5">
+            <Lock className="h-4 w-4 text-primary" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>
+                Currently locked: <strong>{format(parseISO(myLockedDrive.drive_date), "EEEE, MMMM d, yyyy")}</strong>
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleUnlock}
+                disabled={deleteDrive.isPending}
+                className="ml-2"
+              >
+                <Unlock className="h-3 w-3 mr-1" />
+                {deleteDrive.isPending ? "Unlocking..." : "Unlock"}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Drive Date *</Label>
@@ -163,21 +205,23 @@ export function ScheduleDriveModal({ isOpen, onClose, companyId, companyName }: 
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0 z-[110]" align="start">
-                <Calendar
-                  mode="single"
-                  selected={driveDate}
-                  onSelect={setDriveDate}
-                  modifiers={{
-                    blocked: isDateBlocked,
-                    locked: isDateLocked,
-                  }}
-                  modifiersStyles={{
-                    blocked: { backgroundColor: 'hsl(var(--destructive) / 0.1)', color: 'hsl(var(--destructive))' },
-                    locked: { backgroundColor: 'hsl(var(--primary) / 0.2)', color: 'hsl(var(--primary))', fontWeight: 'bold' }
-                  }}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
+                <div className="min-h-[320px]">
+                  <Calendar
+                    mode="single"
+                    selected={driveDate}
+                    onSelect={setDriveDate}
+                    month={calendarMonth}
+                    onMonthChange={setCalendarMonth}
+                    modifiers={{
+                      blocked: isDateBlocked,
+                      locked: isDateLocked,
+                    }}
+                    modifiersStyles={{
+                      blocked: { backgroundColor: 'hsl(var(--destructive) / 0.1)', color: 'hsl(var(--destructive))' },
+                      locked: { backgroundColor: 'hsl(var(--primary) / 0.2)', color: 'hsl(var(--primary))', fontWeight: 'bold' }
+                    }}
+                  />
+                </div>
                 <div className="px-3 pb-3 text-xs text-muted-foreground space-y-1">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-destructive/10 border border-destructive/30" />
