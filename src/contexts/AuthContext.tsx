@@ -94,13 +94,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile);
-        checkIsAdmin(session.user.id).then(setIsAdmin);
+        const [profileData, adminStatus] = await Promise.all([
+          fetchProfile(session.user.id),
+          checkIsAdmin(session.user.id)
+        ]);
+        setProfile(profileData);
+        setIsAdmin(adminStatus);
       }
       setIsLoading(false);
     });
