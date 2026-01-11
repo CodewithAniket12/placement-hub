@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { useCompanies, Company } from "@/hooks/useCompanies";
 import { CompanyDetailsPanel } from "@/components/company/CompanyDetailsPanel";
+import { EmailComposeModal } from "@/components/email/EmailComposeModal";
+import { TemplateManagerModal } from "@/components/email/TemplateManagerModal";
 import { Search, Building2, CheckCircle2, Clock, Loader2, Briefcase, IndianRupee, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +31,12 @@ export default function AllCompanies() {
   const [jobRoleFilter, setJobRoleFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [packageFilter, setPackageFilter] = useState<string>("all");
+  
+  // Email modal state
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [emailCompany, setEmailCompany] = useState<Company | null>(null);
+  const [emailOverride, setEmailOverride] = useState<{ email?: string; hrName?: string }>({});
 
   const { data: companies = [], isLoading } = useCompanies();
 
@@ -316,6 +324,33 @@ export default function AllCompanies() {
         company={selectedCompany}
         isOpen={isPanelOpen}
         onClose={handlePanelClose}
+        onSendEmail={(company, overrideEmail, overrideHrName) => {
+          setEmailCompany(company);
+          setEmailOverride({ email: overrideEmail, hrName: overrideHrName });
+          setIsEmailModalOpen(true);
+        }}
+      />
+
+      {/* Email Compose Modal */}
+      <EmailComposeModal
+        isOpen={isEmailModalOpen}
+        onClose={() => {
+          setIsEmailModalOpen(false);
+          setEmailOverride({});
+        }}
+        company={emailCompany}
+        onManageTemplates={() => {
+          setIsEmailModalOpen(false);
+          setIsTemplateModalOpen(true);
+        }}
+        overrideEmail={emailOverride.email}
+        overrideHrName={emailOverride.hrName}
+      />
+
+      {/* Template Manager Modal */}
+      <TemplateManagerModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
       />
     </div>
   );

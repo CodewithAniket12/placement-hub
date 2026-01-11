@@ -25,7 +25,7 @@ interface CompanyDetailsPanelProps {
   company: Company | null;
   isOpen: boolean;
   onClose: () => void;
-  onSendEmail?: (company: Company) => void;
+  onSendEmail?: (company: Company, overrideEmail?: string, overrideHrName?: string) => void;
 }
 
 const POC_OPTIONS = ["Aniket", "Rushikesh", "Priya", "Bajrang", "Manasi", "Parshuram"];
@@ -653,7 +653,15 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
 
             {/* Multiple Contacts Section */}
             <div className="mb-6">
-              <ContactsSection companyId={company.id} />
+              <ContactsSection 
+                companyId={company.id} 
+                companyName={company.name}
+                onEmailContact={(email, contactName) => {
+                  if (onSendEmail) {
+                    onSendEmail(company, email, contactName);
+                  }
+                }}
+              />
             </div>
 
             {/* Industry */}

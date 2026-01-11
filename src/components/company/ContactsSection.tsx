@@ -22,7 +22,8 @@ import {
   X,
   Check,
   Loader2,
-  Users
+  Users,
+  Send
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -38,6 +39,8 @@ import {
 
 interface ContactsSectionProps {
   companyId: string;
+  companyName: string;
+  onEmailContact?: (email: string, contactName: string) => void;
 }
 
 interface ContactFormData {
@@ -54,7 +57,7 @@ const emptyForm: ContactFormData = {
   email: "",
 };
 
-export function ContactsSection({ companyId }: ContactsSectionProps) {
+export function ContactsSection({ companyId, companyName, onEmailContact }: ContactsSectionProps) {
   const { data: contacts, isLoading } = useCompanyContacts(companyId);
   const createContact = useCreateCompanyContact();
   const updateContact = useUpdateCompanyContact();
@@ -330,6 +333,17 @@ export function ContactsSection({ companyId }: ContactsSectionProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
+                  {contact.email && onEmailContact && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                      onClick={() => onEmailContact(contact.email!, contact.name)}
+                      title="Send email"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  )}
                   {!contact.is_primary && (
                     <Button
                       variant="ghost"

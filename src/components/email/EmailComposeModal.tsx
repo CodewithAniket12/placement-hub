@@ -41,11 +41,13 @@ interface EmailComposeModalProps {
   onClose: () => void;
   company: Company | null;
   onManageTemplates: () => void;
+  overrideEmail?: string;
+  overrideHrName?: string;
 }
 
 const DEFAULT_FROM = "PUCSD Placement Cell";
 
-export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates }: EmailComposeModalProps) {
+export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates, overrideEmail, overrideHrName }: EmailComposeModalProps) {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({});
@@ -234,9 +236,12 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
     setIsSending(true);
 
     try {
+      const recipientEmail = overrideEmail || company.hr_email;
+      const recipientName = overrideHrName || company.hr_name;
+      
       const { data, error } = await supabase.functions.invoke("send-email", {
         body: {
-          to: company.hr_email,
+          to: recipientEmail,
           subject: previewSubject,
           body: previewBody,
           companyName: company.name,
@@ -249,7 +254,7 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
       await supabase.from("email_logs").insert({
         template_id: selectedTemplateId || null,
         company_name: company.name,
-        recipient_email: company.hr_email || "",
+        recipient_email: recipientEmail || "",
         subject: previewSubject,
         body: previewBody,
         status: "sent",
@@ -258,7 +263,7 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates 
 
       toast({
         title: "Email sent!",
-        description: `Successfully sent email to ${company.hr_email}`,
+        description: `Successfully sent email to ${recipientName || recipientEmail}`,
       });
       onClose();
     } catch (error: any) {
