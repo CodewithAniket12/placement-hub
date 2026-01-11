@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          coordinator_name: string
+          created_at: string
+          details: Json | null
+          entity_id: string
+          entity_type: string
+          id: string
+        }
+        Insert: {
+          action: string
+          coordinator_name: string
+          created_at?: string
+          details?: Json | null
+          entity_id: string
+          entity_type: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          coordinator_name?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      campus_drives: {
+        Row: {
+          appeared_count: number | null
+          company_id: string
+          coordinator_name: string
+          created_at: string
+          drive_date: string
+          drive_time: string | null
+          eligible_branches: string | null
+          id: string
+          min_cgpa: number | null
+          notes: string | null
+          registered_count: number | null
+          selected_count: number | null
+          status: string
+          updated_at: string
+          venue: string | null
+        }
+        Insert: {
+          appeared_count?: number | null
+          company_id: string
+          coordinator_name: string
+          created_at?: string
+          drive_date: string
+          drive_time?: string | null
+          eligible_branches?: string | null
+          id?: string
+          min_cgpa?: number | null
+          notes?: string | null
+          registered_count?: number | null
+          selected_count?: number | null
+          status?: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Update: {
+          appeared_count?: number | null
+          company_id?: string
+          coordinator_name?: string
+          created_at?: string
+          drive_date?: string
+          drive_time?: string | null
+          eligible_branches?: string | null
+          id?: string
+          min_cgpa?: number | null
+          notes?: string | null
+          registered_count?: number | null
+          selected_count?: number | null
+          status?: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campus_drives_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           bond_details: string | null
@@ -82,6 +174,50 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      company_contacts: {
+        Row: {
+          company_id: string
+          created_at: string
+          designation: string | null
+          email: string | null
+          id: string
+          is_primary: boolean
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          designation?: string | null
+          email?: string | null
+          id?: string
+          is_primary?: boolean
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          designation?: string | null
+          email?: string | null
+          id?: string
+          is_primary?: boolean
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       coordinators: {
         Row: {
