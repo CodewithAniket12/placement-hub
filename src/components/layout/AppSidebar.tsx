@@ -5,11 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { title: "Admin Panel", url: "/", icon: Shield, adminOnly: true, coordinatorOnly: false },
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, adminOnly: false, coordinatorOnly: true },
-  { title: "All Companies", url: "/companies", icon: Building2, adminOnly: false, coordinatorOnly: true },
-  { title: "Tasks", url: "/tasks", icon: ListTodo, adminOnly: false, coordinatorOnly: true },
-  { title: "Email History", url: "/email-history", icon: Mail, adminOnly: false, coordinatorOnly: true },
+  { title: "Admin Panel", url: "/", icon: Shield, adminOnly: true },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, adminOnly: false },
+  { title: "All Companies", url: "/companies", icon: Building2, adminOnly: false },
+  { title: "Tasks", url: "/tasks", icon: ListTodo, adminOnly: false },
+  { title: "Email History", url: "/email-history", icon: Mail, adminOnly: false },
 ];
 
 export function AppSidebar() {
@@ -23,7 +23,7 @@ export function AppSidebar() {
 
   // Filter nav items based on admin status
   const visibleNavItems = isAdmin 
-    ? navItems.filter(item => !item.coordinatorOnly)
+    ? navItems 
     : navItems.filter(item => !item.adminOnly);
 
   return (
