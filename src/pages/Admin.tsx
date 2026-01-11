@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCompanies } from "@/hooks/useCompanies";
+import { useCompanies, useUpdateCompany } from "@/hooks/useCompanies";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -21,9 +19,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -36,7 +32,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Users, Building2, UserPlus, Trash2, Eye, Check, X, Clock, ExternalLink, Phone } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Users, Building2, UserPlus, Trash2, Eye, Check, X, Clock, ExternalLink, UserCog } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -54,7 +58,13 @@ export default function Admin() {
   const { isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { data: companies = [], isLoading: companiesLoading } = useCompanies();
+  const updateCompany = useUpdateCompany();
   const queryClient = useQueryClient();
+  
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const [selectedPoc1, setSelectedPoc1] = useState<string>("");
+  const [selectedPoc2, setSelectedPoc2] = useState<string>("");
 
   // Fetch pending users
   const { data: pendingUsers = [], isLoading: pendingLoading } = useQuery({
@@ -99,7 +109,6 @@ export default function Admin() {
 
   const handleApproveUser = async (userId: string, profileId: string, displayName: string) => {
     try {
-      // Update profile status to approved
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ status: "approved" })
@@ -107,7 +116,6 @@ export default function Admin() {
 
       if (profileError) throw profileError;
 
-      // Add coordinator role
       const { error: roleError } = await supabase
         .from("user_roles")
         .insert({ user_id: userId, role: "coordinator" });
@@ -140,7 +148,6 @@ export default function Admin() {
 
   const handleRemoveCoordinator = async (userId: string, profileId: string, displayName: string) => {
     try {
-      // Update profile status
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ status: "rejected" })
@@ -148,7 +155,6 @@ export default function Admin() {
 
       if (profileError) throw profileError;
 
-      // Remove coordinator role
       const { error: roleError } = await supabase
         .from("user_roles")
         .delete()
@@ -165,16 +171,29 @@ export default function Admin() {
     }
   };
 
-  const handleMakeAdmin = async (userId: string, displayName: string) => {
+  const handleOpenAssignModal = (company: any) => {
+    setSelectedCompany(company);
+    setSelectedPoc1(company.poc_1st || "");
+    setSelectedPoc2(company.poc_2nd || "");
+    setAssignModalOpen(true);
+  };
+
+  const handleAssignPoc = async () => {
+    if (!selectedCompany || !selectedPoc1) {
+      toast({ title: "Error", description: "Please select at least the primary POC", variant: "destructive" });
+      return;
+    }
+
     try {
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role: "admin" });
+      await updateCompany.mutateAsync({
+        id: selectedCompany.id,
+        poc_1st: selectedPoc1,
+        poc_2nd: selectedPoc2 || null,
+      });
 
-      if (error && !error.message.includes("duplicate")) throw error;
-
-      toast({ title: "Success", description: `${displayName} is now an admin` });
-      queryClient.invalidateQueries({ queryKey: ["approved-coordinators"] });
+      toast({ title: "Success", description: `POC assigned to ${selectedCompany.name}` });
+      setAssignModalOpen(false);
+      setSelectedCompany(null);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -204,12 +223,15 @@ export default function Admin() {
 
   const pendingRequests = pendingUsers.filter(u => u.status === "pending");
 
+  // Get coordinator names for POC selection
+  const coordinatorNames = approvedCoordinators.map(c => c.display_name);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Admin Panel</h1>
-        <p className="text-muted-foreground mt-1">Manage coordinators and oversee all companies</p>
+        <p className="text-muted-foreground mt-1">Manage coordinators and assign companies</p>
       </div>
 
       {/* Stats Cards */}
@@ -272,7 +294,7 @@ export default function Admin() {
           </TabsTrigger>
           <TabsTrigger value="companies" className="gap-2">
             <Building2 className="h-4 w-4" />
-            Company Oversight
+            Assign Companies
           </TabsTrigger>
         </TabsList>
 
@@ -351,46 +373,55 @@ export default function Admin() {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Username</TableHead>
+                      <TableHead>Companies Assigned</TableHead>
                       <TableHead>Joined</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {approvedCoordinators.map((coord) => (
-                      <TableRow key={coord.id}>
-                        <TableCell className="font-medium">{coord.display_name}</TableCell>
-                        <TableCell>@{coord.username}</TableCell>
-                        <TableCell>
-                          {new Date(coord.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Remove Coordinator?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to remove {coord.display_name}? They will lose access to the system.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleRemoveCoordinator(coord.user_id, coord.id, coord.display_name)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Remove
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {approvedCoordinators.map((coord) => {
+                      const assignedCompanies = companies.filter(
+                        c => c.poc_1st === coord.display_name || c.poc_2nd === coord.display_name
+                      ).length;
+                      return (
+                        <TableRow key={coord.id}>
+                          <TableCell className="font-medium">{coord.display_name}</TableCell>
+                          <TableCell>@{coord.username}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{assignedCompanies}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(coord.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Remove Coordinator?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to remove {coord.display_name}? They will lose access to the system.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleRemoveCoordinator(coord.user_id, coord.id, coord.display_name)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Remove
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
@@ -398,11 +429,11 @@ export default function Admin() {
           </Card>
         </TabsContent>
 
-        {/* Company Oversight Tab */}
+        {/* Assign Companies Tab */}
         <TabsContent value="companies" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>All Companies</CardTitle>
+              <CardTitle>Assign Companies to Coordinators</CardTitle>
             </CardHeader>
             <CardContent>
               {companiesLoading ? (
@@ -417,10 +448,8 @@ export default function Admin() {
                         <TableHead>Company</TableHead>
                         <TableHead>Industry</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Registration</TableHead>
                         <TableHead>POC (Primary)</TableHead>
                         <TableHead>POC (Secondary)</TableHead>
-                        <TableHead>HR Contact</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -449,27 +478,23 @@ export default function Admin() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge className={getRegistrationStatusColor(company.registration_status)}>
-                              {company.registration_status}
-                            </Badge>
+                            <Badge variant="outline">{company.poc_1st}</Badge>
                           </TableCell>
-                          <TableCell>{company.poc_1st}</TableCell>
-                          <TableCell>{company.poc_2nd || "-"}</TableCell>
                           <TableCell>
-                            <div className="text-sm">
-                              <p>{company.hr_name || "-"}</p>
-                              {company.hr_email && (
-                                <p className="text-muted-foreground text-xs">{company.hr_email}</p>
-                              )}
-                            </div>
+                            {company.poc_2nd ? (
+                              <Badge variant="outline">{company.poc_2nd}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => navigate(`/companies?view=${company.id}`)}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenAssignModal(company)}
                             >
-                              <Eye className="h-4 w-4" />
+                              <UserCog className="h-4 w-4 mr-1" />
+                              Assign POC
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -482,6 +507,58 @@ export default function Admin() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Assign POC Modal */}
+      <Dialog open={assignModalOpen} onOpenChange={setAssignModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign POC to {selectedCompany?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Primary POC (Required)</Label>
+              <Select value={selectedPoc1} onValueChange={setSelectedPoc1}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select primary coordinator" />
+                </SelectTrigger>
+                <SelectContent>
+                  {coordinatorNames.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Secondary POC (Optional)</Label>
+              <Select value={selectedPoc2} onValueChange={setSelectedPoc2}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select secondary coordinator" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {coordinatorNames
+                    .filter((name) => name !== selectedPoc1)
+                    .map((name) => (
+                      <SelectItem key={name} value={name}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAssignPoc} disabled={updateCompany.isPending}>
+              {updateCompany.isPending ? "Saving..." : "Assign POC"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
