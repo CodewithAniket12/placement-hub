@@ -11,7 +11,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
-const VALID_COORDINATORS = ["Aniket", "Mansi", "Bajrang", "Rushikesh", "Priya", "Parshuram"];
+const VALID_COORDINATORS = ["Aniket", "Mansi", "Bajrang", "Rushikesh", "Priya", "Parshuram", "Admin"];
 const VALID_PASSWORD = "123";
 
 const AuthContext = createContext<AuthContextType | null>(null);
