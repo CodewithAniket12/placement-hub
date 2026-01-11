@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Company, useUpdateCompanyNotes, useUpdateCompany, useDeleteCompany, useBlacklistCompany, useExtractAndSaveFormData } from "@/hooks/useCompanies";
-import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil, Trash2, Ban, Upload, FileText, Briefcase, MapPin, GraduationCap, FileCheck, Loader2 } from "lucide-react";
+import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil, Trash2, Ban, Upload, FileText, Briefcase, MapPin, GraduationCap, FileCheck, Loader2, CalendarPlus } from "lucide-react";
+import { AddTaskModal } from "@/components/tasks/AddTaskModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,6 +54,7 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showBlacklistDialog, setShowBlacklistDialog] = useState(false);
   const [showEmailConfirmDialog, setShowEmailConfirmDialog] = useState(false);
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [blacklistReason, setBlacklistReason] = useState("");
   
   const updateNotes = useUpdateCompanyNotes();
@@ -714,7 +716,16 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
             {/* Actions Section */}
             <div className="mb-6">
               <h3 className="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide">Actions</h3>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddTaskModal(true)}
+                  className="text-primary border-primary/30 hover:bg-primary/10"
+                >
+                  <CalendarPlus className="h-4 w-4 mr-1" />
+                  Add Follow-up
+                </Button>
                 {company.status !== "Blacklisted" && (
                   <Button
                     variant="outline"
@@ -824,6 +835,13 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add Task Modal */}
+      <AddTaskModal
+        isOpen={showAddTaskModal}
+        onClose={() => setShowAddTaskModal(false)}
+        preselectedCompanyId={company.id}
+      />
     </>
   );
 }
