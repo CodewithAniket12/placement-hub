@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import AllCompanies from "./pages/AllCompanies";
 import EmailHistory from "./pages/EmailHistory";
 import Tasks from "./pages/Tasks";
+import Scheduling from "./pages/Scheduling";
 import Admin from "./pages/Admin";
 import HomeRedirect from "./pages/HomeRedirect";
 import Login from "./pages/Login";
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/companies" element={<AllCompanies />} />
               <Route path="/tasks" element={<Tasks />} />
+              <Route path="/scheduling" element={<Scheduling />} />
               <Route path="/email-history" element={<EmailHistory />} />
             </Route>
             <Route path="*" element={<NotFound />} />

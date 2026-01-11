@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateCampusDrive } from "@/hooks/useCampusDrives";
+import { useCreateCampusDrive, useCampusDrives } from "@/hooks/useCampusDrives";
 import { useBlockedDates } from "@/hooks/useBlockedDates";
 import { BlockedDateRequestModal } from "@/components/scheduling/BlockedDateRequestModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { CalendarIcon, AlertTriangle } from "lucide-react";
-import { format, isWithinInterval, parseISO } from "date-fns";
+import { CalendarIcon, AlertTriangle, Lock } from "lucide-react";
+import { format, isWithinInterval, parseISO, isSameDay } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -28,12 +28,18 @@ export function ScheduleDriveModal({ isOpen, onClose, companyId, companyName }: 
   const { profile } = useAuth();
   const createDrive = useCreateCampusDrive();
   const { data: blockedDates } = useBlockedDates();
+  const { data: allDrives } = useCampusDrives();
   
   const [driveDate, setDriveDate] = useState<Date>();
   const [driveTime, setDriveTime] = useState("");
   const [venue, setVenue] = useState("");
   const [notes, setNotes] = useState("");
   const [showBlockedRequestModal, setShowBlockedRequestModal] = useState(false);
+
+  // Get all scheduled/locked drives (excluding current company)
+  const scheduledDrives = allDrives?.filter(d => 
+    d.status === "scheduled" && d.company_id !== companyId
+  ) || [];
 
   // Check if selected date falls within a blocked period
   const getBlockedDateConflict = (date: Date | undefined) => {
@@ -47,13 +53,29 @@ export function ScheduleDriveModal({ isOpen, onClose, companyId, companyName }: 
     );
   };
 
+  // Check if a date is already locked by another POC
+  const getLockedDriveConflict = (date: Date | undefined) => {
+    if (!date || !scheduledDrives) return null;
+    
+    return scheduledDrives.find(drive => 
+      isSameDay(parseISO(drive.drive_date), date)
+    );
+  };
+
   const blockedConflict = getBlockedDateConflict(driveDate);
+  const lockedConflict = getLockedDriveConflict(driveDate);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!driveDate || !profile?.display_name) {
       toast.error("Please select a date");
+      return;
+    }
+
+    // If date is locked by another POC, show error
+    if (lockedConflict) {
+      toast.error(`This date is already locked by ${lockedConflict.coordinator_name}`);
       return;
     }
 
@@ -79,7 +101,7 @@ export function ScheduleDriveModal({ isOpen, onClose, companyId, companyName }: 
         status: "scheduled",
       });
       
-      toast.success("Drive scheduled successfully");
+      toast.success("Drive scheduled and date locked successfully");
       handleClose();
     } catch (error) {
       toast.error("Failed to schedule drive");
@@ -105,13 +127,21 @@ export function ScheduleDriveModal({ isOpen, onClose, companyId, companyName }: 
     );
   };
 
+  // Check if a date is already locked by another POC
+  const isDateLocked = (date: Date) => {
+    if (!scheduledDrives) return false;
+    return scheduledDrives.some(drive => 
+      isSameDay(parseISO(drive.drive_date), date)
+    );
+  };
+
   const modalContent = (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] z-[100]">
         <DialogHeader>
           <DialogTitle>Schedule Campus Drive</DialogTitle>
           <DialogDescription>
-            Schedule a drive for {companyName}
+            Schedule a drive for {companyName}. The selected date will be locked.
           </DialogDescription>
         </DialogHeader>
         
@@ -139,13 +169,25 @@ export function ScheduleDriveModal({ isOpen, onClose, companyId, companyName }: 
                   onSelect={setDriveDate}
                   modifiers={{
                     blocked: isDateBlocked,
+                    locked: isDateLocked,
                   }}
                   modifiersStyles={{
-                    blocked: { backgroundColor: 'hsl(var(--destructive) / 0.1)', color: 'hsl(var(--destructive))' }
+                    blocked: { backgroundColor: 'hsl(var(--destructive) / 0.1)', color: 'hsl(var(--destructive))' },
+                    locked: { backgroundColor: 'hsl(var(--primary) / 0.2)', color: 'hsl(var(--primary))', fontWeight: 'bold' }
                   }}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                 />
+                <div className="px-3 pb-3 text-xs text-muted-foreground space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-destructive/10 border border-destructive/30" />
+                    <span>Blocked period (needs admin approval)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-primary/20 border border-primary/30" />
+                    <span>Already locked by another POC</span>
+                  </div>
+                </div>
               </PopoverContent>
             </Popover>
           </div>
@@ -156,6 +198,16 @@ export function ScheduleDriveModal({ isOpen, onClose, companyId, companyName }: 
               <AlertDescription>
                 This date is in a blocked period: <strong>{blockedConflict.reason}</strong>. 
                 You'll need admin approval to schedule on this date.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {lockedConflict && (
+            <Alert>
+              <Lock className="h-4 w-4" />
+              <AlertDescription>
+                This date is already locked by <strong>{lockedConflict.coordinator_name}</strong> for <strong>{lockedConflict.company?.name || "a company"}</strong>.
+                Please choose another date.
               </AlertDescription>
             </Alert>
           )}
@@ -193,12 +245,15 @@ export function ScheduleDriveModal({ isOpen, onClose, companyId, companyName }: 
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createDrive.isPending}>
+            <Button 
+              type="submit" 
+              disabled={createDrive.isPending || !!lockedConflict}
+            >
               {blockedConflict 
                 ? "Request Approval" 
                 : createDrive.isPending 
                   ? "Scheduling..." 
-                  : "Schedule Drive"
+                  : "Lock Date & Schedule"
               }
             </Button>
           </div>
