@@ -185,7 +185,18 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
     if (!file || !company) return;
     
     try {
-      await extractFormData.mutateAsync({ companyId: company.id, file });
+      const updatedData = await extractFormData.mutateAsync({ companyId: company.id, file });
+      // Update local form state immediately with extracted data
+      if (updatedData) {
+        setJobDetailsForm({
+          job_roles: updatedData.job_roles || "",
+          package_offered: updatedData.package_offered || "",
+          eligibility_criteria: updatedData.eligibility_criteria || "",
+          bond_details: updatedData.bond_details || "",
+          job_location: updatedData.job_location || "",
+          selection_process: updatedData.selection_process || "",
+        });
+      }
       toast({ title: "Registration form data extracted successfully!" });
     } catch (error) {
       toast({ 
@@ -386,70 +397,70 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                       </Button>
                     </div>
                   </div>
-                ) : company.registration_status === "Submitted" ? (
+                ) : company.registration_status === "Submitted" || jobDetailsForm.job_roles || jobDetailsForm.package_offered ? (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-success mb-3">
                       <CheckCircle2 className="h-4 w-4" />
                       <span className="font-medium">Data Available</span>
                     </div>
                     
-                    {company.job_roles && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                          <Briefcase className="h-3 w-3" />
-                          Job Roles
-                        </div>
-                        <p className="text-sm text-card-foreground">{company.job_roles}</p>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        <Briefcase className="h-3 w-3" />
+                        Job Roles
                       </div>
-                    )}
+                      <p className="text-sm text-card-foreground">
+                        {jobDetailsForm.job_roles || company.job_roles || <span className="text-muted-foreground italic">Not given</span>}
+                      </p>
+                    </div>
                     
-                    {company.package_offered && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                          <FileCheck className="h-3 w-3" />
-                          Package Offered
-                        </div>
-                        <p className="text-sm text-card-foreground">{company.package_offered}</p>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        <FileCheck className="h-3 w-3" />
+                        Package Offered
                       </div>
-                    )}
+                      <p className="text-sm text-card-foreground">
+                        {jobDetailsForm.package_offered || company.package_offered || <span className="text-muted-foreground italic">Not given</span>}
+                      </p>
+                    </div>
                     
-                    {company.eligibility_criteria && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                          <GraduationCap className="h-3 w-3" />
-                          Eligibility Criteria
-                        </div>
-                        <p className="text-sm text-card-foreground">{company.eligibility_criteria}</p>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        <GraduationCap className="h-3 w-3" />
+                        Eligibility Criteria
                       </div>
-                    )}
+                      <p className="text-sm text-card-foreground">
+                        {jobDetailsForm.eligibility_criteria || company.eligibility_criteria || <span className="text-muted-foreground italic">Not given</span>}
+                      </p>
+                    </div>
                     
-                    {company.job_location && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                          <MapPin className="h-3 w-3" />
-                          Location
-                        </div>
-                        <p className="text-sm text-card-foreground">{company.job_location}</p>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        Location
                       </div>
-                    )}
+                      <p className="text-sm text-card-foreground">
+                        {jobDetailsForm.job_location || company.job_location || <span className="text-muted-foreground italic">Not given</span>}
+                      </p>
+                    </div>
                     
-                    {company.bond_details && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                          Bond Details
-                        </div>
-                        <p className="text-sm text-card-foreground">{company.bond_details}</p>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        Bond Details
                       </div>
-                    )}
+                      <p className="text-sm text-card-foreground">
+                        {jobDetailsForm.bond_details || company.bond_details || <span className="text-muted-foreground italic">Not given</span>}
+                      </p>
+                    </div>
                     
-                    {company.selection_process && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                          Selection Process
-                        </div>
-                        <p className="text-sm text-card-foreground">{company.selection_process}</p>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        Selection Process
                       </div>
-                    )}
+                      <p className="text-sm text-card-foreground">
+                        {jobDetailsForm.selection_process || company.selection_process || <span className="text-muted-foreground italic">Not given</span>}
+                      </p>
+                    </div>
                     
                     <div className="pt-2 border-t border-border">
                       <Button
