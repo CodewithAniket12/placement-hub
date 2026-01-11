@@ -4,11 +4,14 @@ import { Building2, GraduationCap, Mail, LogOut, ListTodo, Shield, LayoutDashboa
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
+import { CalendarCheck } from "lucide-react";
+
 const navItems = [
   { title: "Admin Panel", url: "/admin", icon: Shield, adminOnly: true },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, coordinatorOnly: true },
   { title: "All Companies", url: "/companies", icon: Building2 },
-  { title: "Scheduling", url: "/tasks", icon: ListTodo, adminOnly: true },
+  { title: "Tasks", url: "/tasks", icon: ListTodo, coordinatorOnly: true },
+  { title: "Scheduling", url: "/scheduling", icon: CalendarCheck, adminOnly: true },
   { title: "Email History", url: "/email-history", icon: Mail },
 ];
 
