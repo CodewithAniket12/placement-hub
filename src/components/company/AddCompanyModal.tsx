@@ -21,6 +21,8 @@ export function AddCompanyModal({ isOpen, onClose }: AddCompanyModalProps) {
     name: "",
     industry: "",
     website: "",
+    contact_type: "HR" as "HR" | "Alumni" | "Other",
+    custom_designation: "",
     hr_name: "",
     hr_phone: "",
     hr_email: "",
@@ -72,6 +74,8 @@ export function AddCompanyModal({ isOpen, onClose }: AddCompanyModalProps) {
         name: "",
         industry: "",
         website: "",
+        contact_type: "HR",
+        custom_designation: "",
         hr_name: "",
         hr_phone: "",
         hr_email: "",
@@ -127,12 +131,43 @@ export function AddCompanyModal({ isOpen, onClose }: AddCompanyModalProps) {
             />
           </div>
 
-          {/* HR Details */}
+          {/* Contact Details */}
           <div className="p-4 bg-muted/50 rounded-lg space-y-4">
-            <h4 className="font-medium text-sm">HR Contact Details</h4>
+            <h4 className="font-medium text-sm">Contact Details</h4>
+            
+            {/* Contact Type Selection */}
+            <div className="space-y-2">
+              <Label>Contact Type</Label>
+              <Select 
+                value={formData.contact_type} 
+                onValueChange={(v: "HR" | "Alumni" | "Other") => setFormData({ ...formData, contact_type: v, custom_designation: "" })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="HR">HR</SelectItem>
+                  <SelectItem value="Alumni">Alumni</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Custom Designation (only for "Other") */}
+            {formData.contact_type === "Other" && (
+              <div className="space-y-2">
+                <Label>Designation</Label>
+                <Input
+                  value={formData.custom_designation}
+                  onChange={(e) => setFormData({ ...formData, custom_designation: e.target.value })}
+                  placeholder="e.g., Manager, Director, Recruiter"
+                />
+              </div>
+            )}
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>HR Name</Label>
+                <Label>Contact Name</Label>
                 <Input
                   value={formData.hr_name}
                   onChange={(e) => setFormData({ ...formData, hr_name: e.target.value })}
@@ -140,7 +175,7 @@ export function AddCompanyModal({ isOpen, onClose }: AddCompanyModalProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label>HR Phone</Label>
+                <Label>Phone</Label>
                 <Input
                   value={formData.hr_phone}
                   onChange={(e) => setFormData({ ...formData, hr_phone: e.target.value })}
@@ -149,7 +184,7 @@ export function AddCompanyModal({ isOpen, onClose }: AddCompanyModalProps) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>HR Email</Label>
+              <Label>Email</Label>
               <Input
                 type="email"
                 value={formData.hr_email}
