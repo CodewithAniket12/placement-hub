@@ -1,12 +1,13 @@
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
-import { LayoutDashboard, Building2, GraduationCap, Mail, LogOut } from "lucide-react";
+import { LayoutDashboard, Building2, GraduationCap, Mail, LogOut, ListTodo } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "All Companies", url: "/companies", icon: Building2 },
+  { title: "Tasks", url: "/tasks", icon: ListTodo },
   { title: "Email History", url: "/email-history", icon: Mail },
 ];
 
