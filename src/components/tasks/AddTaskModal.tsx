@@ -30,6 +30,7 @@ export function AddTaskModal({ isOpen, onClose, defaultCompanyId }: AddTaskModal
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState<Date>();
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [companyId, setCompanyId] = useState(defaultCompanyId || "");
 
@@ -116,13 +117,15 @@ export function AddTaskModal({ isOpen, onClose, defaultCompanyId }: AddTaskModal
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 z-[110]" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={setDueDate}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
+                  <div className="min-h-[300px]">
+                    <Calendar
+                      mode="single"
+                      selected={dueDate}
+                      onSelect={setDueDate}
+                      month={calendarMonth}
+                      onMonthChange={setCalendarMonth}
+                    />
+                  </div>
                 </PopoverContent>
               </Popover>
             </div>
