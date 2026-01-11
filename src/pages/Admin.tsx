@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompanies } from "@/hooks/useCompanies";
-import { useCoordinators } from "@/hooks/useCoordinators";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,64 +36,145 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Users, Building2, Plus, Trash2, Eye, Edit, Phone, ExternalLink } from "lucide-react";
+import { Users, Building2, UserPlus, Trash2, Eye, Check, X, Clock, ExternalLink, Phone } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+
+interface PendingUser {
+  id: string;
+  user_id: string;
+  username: string;
+  display_name: string;
+  status: string;
+  created_at: string;
+}
 
 export default function Admin() {
-  const { coordinator } = useAuth();
+  const { isAdmin, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { data: companies = [], isLoading: companiesLoading } = useCompanies();
-  const { data: coordinators = [], isLoading: coordinatorsLoading } = useCoordinators();
   const queryClient = useQueryClient();
 
-  const [newCoordinator, setNewCoordinator] = useState({ name: "", phone: "" });
-  const [isAddingCoordinator, setIsAddingCoordinator] = useState(false);
+  // Fetch pending users
+  const { data: pendingUsers = [], isLoading: pendingLoading } = useQuery({
+    queryKey: ["pending-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("status", ["pending", "rejected"])
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as PendingUser[];
+    },
+  });
+
+  // Fetch approved coordinators
+  const { data: approvedCoordinators = [], isLoading: coordinatorsLoading } = useQuery({
+    queryKey: ["approved-coordinators"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("status", "approved")
+        .order("display_name");
+
+      if (error) throw error;
+      return data as PendingUser[];
+    },
+  });
 
   // Redirect non-admin users
-  if (coordinator?.name?.toLowerCase() !== "admin") {
+  if (!authLoading && !isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
         <p className="text-muted-foreground">You don't have permission to access this page.</p>
-        <Button onClick={() => navigate("/")}>Go to Dashboard</Button>
+        <Button onClick={() => navigate("/dashboard")}>Go to Dashboard</Button>
       </div>
     );
   }
 
-  const handleAddCoordinator = async () => {
-    if (!newCoordinator.name.trim() || !newCoordinator.phone.trim()) {
-      toast({ title: "Error", description: "Please fill all fields", variant: "destructive" });
-      return;
-    }
-
-    setIsAddingCoordinator(true);
+  const handleApproveUser = async (userId: string, profileId: string, displayName: string) => {
     try {
-      const { error } = await supabase.from("coordinators").insert({
-        name: newCoordinator.name.trim(),
-        phone: newCoordinator.phone.trim(),
-      });
+      // Update profile status to approved
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ status: "approved" })
+        .eq("id", profileId);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
-      toast({ title: "Success", description: "Coordinator added successfully" });
-      setNewCoordinator({ name: "", phone: "" });
-      queryClient.invalidateQueries({ queryKey: ["coordinators"] });
+      // Add coordinator role
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role: "coordinator" });
+
+      if (roleError && !roleError.message.includes("duplicate")) throw roleError;
+
+      toast({ title: "Success", description: `${displayName} has been approved` });
+      queryClient.invalidateQueries({ queryKey: ["pending-users"] });
+      queryClient.invalidateQueries({ queryKey: ["approved-coordinators"] });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setIsAddingCoordinator(false);
     }
   };
 
-  const handleDeleteCoordinator = async (id: string, name: string) => {
+  const handleRejectUser = async (profileId: string, displayName: string) => {
     try {
-      const { error } = await supabase.from("coordinators").delete().eq("id", id);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ status: "rejected" })
+        .eq("id", profileId);
+
       if (error) throw error;
 
-      toast({ title: "Success", description: `${name} removed from coordinators` });
-      queryClient.invalidateQueries({ queryKey: ["coordinators"] });
+      toast({ title: "User Rejected", description: `${displayName}'s access has been denied` });
+      queryClient.invalidateQueries({ queryKey: ["pending-users"] });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleRemoveCoordinator = async (userId: string, profileId: string, displayName: string) => {
+    try {
+      // Update profile status
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ status: "rejected" })
+        .eq("id", profileId);
+
+      if (profileError) throw profileError;
+
+      // Remove coordinator role
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", "coordinator");
+
+      if (roleError) throw roleError;
+
+      toast({ title: "Success", description: `${displayName} has been removed` });
+      queryClient.invalidateQueries({ queryKey: ["approved-coordinators"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-users"] });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleMakeAdmin = async (userId: string, displayName: string) => {
+    try {
+      const { error } = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role: "admin" });
+
+      if (error && !error.message.includes("duplicate")) throw error;
+
+      toast({ title: "Success", description: `${displayName} is now an admin` });
+      queryClient.invalidateQueries({ queryKey: ["approved-coordinators"] });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -122,13 +202,7 @@ export default function Admin() {
     }
   };
 
-  // Group companies by coordinator
-  const companiesByCoordinator = companies.reduce((acc, company) => {
-    const poc = company.poc_1st || "Unassigned";
-    if (!acc[poc]) acc[poc] = [];
-    acc[poc].push(company);
-    return acc;
-  }, {} as Record<string, typeof companies>);
+  const pendingRequests = pendingUsers.filter(u => u.status === "pending");
 
   return (
     <div className="space-y-6">
@@ -142,11 +216,20 @@ export default function Admin() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Coordinators</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
+            <Clock className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pendingRequests.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Active Coordinators</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{coordinators.length}</div>
+            <div className="text-2xl font-bold">{approvedCoordinators.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -169,25 +252,23 @@ export default function Admin() {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Forms Submitted</CardTitle>
-            <Building2 className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {companies.filter((c) => c.registration_status === "Submitted").length}
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="coordinators" className="space-y-4">
+      <Tabs defaultValue="requests" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="requests" className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            Access Requests
+            {pendingRequests.length > 0 && (
+              <Badge variant="destructive" className="ml-1">
+                {pendingRequests.length}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="coordinators" className="gap-2">
             <Users className="h-4 w-4" />
-            Coordinator Management
+            Coordinators
           </TabsTrigger>
           <TabsTrigger value="companies" className="gap-2">
             <Building2 className="h-4 w-4" />
@@ -195,86 +276,92 @@ export default function Admin() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Coordinator Management Tab */}
+        {/* Access Requests Tab */}
+        <TabsContent value="requests" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending Access Requests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pendingLoading ? (
+                <p className="text-muted-foreground">Loading requests...</p>
+              ) : pendingRequests.length === 0 ? (
+                <p className="text-muted-foreground">No pending requests</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Username</TableHead>
+                      <TableHead>Requested On</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingRequests.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.display_name}</TableCell>
+                        <TableCell>@{user.username}</TableCell>
+                        <TableCell>
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => handleApproveUser(user.user_id, user.id, user.display_name)}
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleRejectUser(user.id, user.display_name)}
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Coordinators Tab */}
         <TabsContent value="coordinators" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Coordinators</CardTitle>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Add Coordinator
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Coordinator</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>Name</Label>
-                      <Input
-                        placeholder="Enter coordinator name"
-                        value={newCoordinator.name}
-                        onChange={(e) =>
-                          setNewCoordinator((prev) => ({ ...prev, name: e.target.value }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Phone</Label>
-                      <Input
-                        placeholder="Enter phone number"
-                        value={newCoordinator.phone}
-                        onChange={(e) =>
-                          setNewCoordinator((prev) => ({ ...prev, phone: e.target.value }))
-                        }
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <DialogClose asChild>
-                      <Button onClick={handleAddCoordinator} disabled={isAddingCoordinator}>
-                        {isAddingCoordinator ? "Adding..." : "Add Coordinator"}
-                      </Button>
-                    </DialogClose>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+            <CardHeader>
+              <CardTitle>Active Coordinators</CardTitle>
             </CardHeader>
             <CardContent>
               {coordinatorsLoading ? (
                 <p className="text-muted-foreground">Loading coordinators...</p>
-              ) : coordinators.length === 0 ? (
+              ) : approvedCoordinators.length === 0 ? (
                 <p className="text-muted-foreground">No coordinators found</p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Companies Assigned</TableHead>
+                      <TableHead>Username</TableHead>
+                      <TableHead>Joined</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {coordinators.map((coord) => (
+                    {approvedCoordinators.map((coord) => (
                       <TableRow key={coord.id}>
-                        <TableCell className="font-medium">{coord.name}</TableCell>
+                        <TableCell className="font-medium">{coord.display_name}</TableCell>
+                        <TableCell>@{coord.username}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            {coord.phone}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">
-                            {companiesByCoordinator[coord.name]?.length || 0} companies
-                          </Badge>
+                          {new Date(coord.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
                           <AlertDialog>
@@ -287,14 +374,13 @@ export default function Admin() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Remove Coordinator?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to remove {coord.name}? This action cannot be
-                                  undone.
+                                  Are you sure you want to remove {coord.display_name}? They will lose access to the system.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handleDeleteCoordinator(coord.id, coord.name)}
+                                  onClick={() => handleRemoveCoordinator(coord.user_id, coord.id, coord.display_name)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
                                   Remove

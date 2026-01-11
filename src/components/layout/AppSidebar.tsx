@@ -1,24 +1,30 @@
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
-import { Building2, GraduationCap, Mail, LogOut, ListTodo, Shield } from "lucide-react";
+import { Building2, GraduationCap, Mail, LogOut, ListTodo, Shield, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { title: "Admin Panel", url: "/", icon: Shield },
-  { title: "All Companies", url: "/companies", icon: Building2 },
-  { title: "Tasks", url: "/tasks", icon: ListTodo },
-  { title: "Email History", url: "/email-history", icon: Mail },
+  { title: "Admin Panel", url: "/", icon: Shield, adminOnly: true },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, adminOnly: false },
+  { title: "All Companies", url: "/companies", icon: Building2, adminOnly: false },
+  { title: "Tasks", url: "/tasks", icon: ListTodo, adminOnly: false },
+  { title: "Email History", url: "/email-history", icon: Mail, adminOnly: false },
 ];
 
 export function AppSidebar() {
-  const { coordinator, logout } = useAuth();
+  const { profile, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate("/login");
   };
+
+  // Filter nav items based on admin status
+  const visibleNavItems = isAdmin 
+    ? navItems 
+    : navItems.filter(item => !item.adminOnly);
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-sidebar">
@@ -36,11 +42,11 @@ export function AppSidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 p-4">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavLink
               key={item.title}
               to={item.url}
-              end={item.url === "/"}
+              end={item.url === "/" || item.url === "/dashboard"}
               className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-sidebar-muted-foreground transition-all hover:bg-sidebar-muted hover:text-sidebar-foreground"
               activeClassName="bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
             >
@@ -54,12 +60,12 @@ export function AppSidebar() {
         <div className="border-t border-border p-4">
           <div className="flex items-center gap-3 rounded-xl bg-sidebar-muted px-4 py-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-              {coordinator?.name?.charAt(0) || "?"}
+              {profile?.display_name?.charAt(0) || "?"}
             </div>
             <div className="flex-1 truncate">
-              <p className="text-sm font-medium text-sidebar-foreground">{coordinator?.name || "Unknown"}</p>
+              <p className="text-sm font-medium text-sidebar-foreground">{profile?.display_name || "Unknown"}</p>
               <p className="text-xs text-sidebar-muted-foreground">
-                {coordinator?.name?.toLowerCase() === "admin" ? "Administrator" : "Coordinator"}
+                {isAdmin ? "Administrator" : "Coordinator"}
               </p>
             </div>
             <Button

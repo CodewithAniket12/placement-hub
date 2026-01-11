@@ -24,8 +24,8 @@ function getGreetingEmoji(): string {
 }
 
 export default function Dashboard() {
-  const { coordinator } = useAuth();
-  const coordinatorName = coordinator?.name || "";
+  const { profile } = useAuth();
+  const coordinatorName = profile?.display_name || "";
 
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);

@@ -12,8 +12,8 @@ interface CompanyCardProps {
 }
 
 export function CompanyCard({ company, onCardClick, onMailClick }: CompanyCardProps) {
-  const { coordinator } = useAuth();
-  const coordinatorName = coordinator?.name || "";
+  const { profile } = useAuth();
+  const coordinatorName = profile?.display_name || "";
   
   const isPrimaryPOC = company.poc_1st === coordinatorName;
   const isSecondaryPOC = company.poc_2nd === coordinatorName;

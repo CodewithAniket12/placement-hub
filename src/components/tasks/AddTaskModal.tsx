@@ -23,7 +23,7 @@ interface AddTaskModalProps {
 }
 
 export function AddTaskModal({ isOpen, onClose, preselectedCompanyId }: AddTaskModalProps) {
-  const { coordinator } = useAuth();
+  const { profile } = useAuth();
   const { data: companies } = useCompanies();
   const createTask = useCreateTask();
   
@@ -43,7 +43,7 @@ export function AddTaskModal({ isOpen, onClose, preselectedCompanyId }: AddTaskM
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || !dueDate || !coordinator?.name) {
+    if (!title || !dueDate || !profile?.display_name) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -53,7 +53,7 @@ export function AddTaskModal({ isOpen, onClose, preselectedCompanyId }: AddTaskM
         title,
         description: description || null,
         company_id: companyId === "none" ? null : companyId || null,
-        coordinator_name: coordinator.name,
+        coordinator_name: profile.display_name,
         due_date: dueDate.toISOString(),
         status: "pending",
         priority,
