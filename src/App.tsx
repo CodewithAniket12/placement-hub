@@ -11,6 +11,7 @@ import AllCompanies from "./pages/AllCompanies";
 import EmailHistory from "./pages/EmailHistory";
 import Tasks from "./pages/Tasks";
 import Admin from "./pages/Admin";
+import HomeRedirect from "./pages/HomeRedirect";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Pending from "./pages/Pending";
@@ -36,7 +37,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route path="/" element={<Admin />} />
+              <Route path="/" element={<HomeRedirect />} />
+              <Route path="/admin" element={<Admin />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/companies" element={<AllCompanies />} />
               <Route path="/tasks" element={<Tasks />} />
