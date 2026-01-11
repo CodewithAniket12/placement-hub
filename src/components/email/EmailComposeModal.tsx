@@ -117,7 +117,8 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates,
         if (p.key === "company_name") {
           defaults[p.key] = company.name;
         } else if (p.key === "hr_name") {
-          defaults[p.key] = company.hr_name || p.default || "Hi Team";
+          // Use override name if provided, else company hr_name
+          defaults[p.key] = overrideHrName || company.hr_name || p.default || "Hi Team";
         } else if (p.key === "from") {
           defaults[p.key] = DEFAULT_FROM;
         } else if (p.default) {
@@ -126,7 +127,7 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates,
       });
       setPlaceholderValues(defaults);
     }
-  }, [selectedTemplateId, company, templates, isAiGenerated]);
+  }, [selectedTemplateId, company, templates, isAiGenerated, overrideHrName]);
 
   // Update preview when template or values change
   useEffect(() => {
@@ -408,7 +409,10 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates,
               <div className="border rounded-lg p-4 bg-card space-y-4">
                 <div>
                   <Label className="text-sm text-muted-foreground">To:</Label>
-                  <p className="font-medium">{company?.hr_email || "No email"}</p>
+                  <p className="font-medium">
+                    {overrideEmail || company?.hr_email || "No email"}
+                    {overrideHrName && <span className="text-muted-foreground ml-2">({overrideHrName})</span>}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm text-muted-foreground">Subject:</Label>
@@ -455,7 +459,10 @@ export function EmailComposeModal({ isOpen, onClose, company, onManageTemplates,
             <AlertDialogTitle>Confirm Send Email</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to send this email to{" "}
-              <span className="font-semibold text-foreground">{company?.hr_email}</span>?
+              <span className="font-semibold text-foreground">
+                {overrideHrName || company?.hr_name || "recipient"}
+              </span>{" "}
+              at <span className="font-semibold text-foreground">{overrideEmail || company?.hr_email}</span>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
