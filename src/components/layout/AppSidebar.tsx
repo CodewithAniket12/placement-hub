@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { title: "Admin Panel", url: "/admin", icon: Shield, adminOnly: true },
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, adminOnly: false },
-  { title: "All Companies", url: "/companies", icon: Building2, adminOnly: false },
-  { title: "Tasks", url: "/tasks", icon: ListTodo, adminOnly: false },
-  { title: "Email History", url: "/email-history", icon: Mail, adminOnly: false },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, coordinatorOnly: true },
+  { title: "All Companies", url: "/companies", icon: Building2 },
+  { title: "Tasks", url: "/tasks", icon: ListTodo },
+  { title: "Email History", url: "/email-history", icon: Mail },
 ];
 
 export function AppSidebar() {
@@ -22,9 +22,11 @@ export function AppSidebar() {
   };
 
   // Filter nav items based on admin status
-  const visibleNavItems = isAdmin 
-    ? navItems 
-    : navItems.filter(item => !item.adminOnly);
+  const visibleNavItems = navItems.filter(item => {
+    if (item.adminOnly && !isAdmin) return false;
+    if (item.coordinatorOnly && isAdmin) return false;
+    return true;
+  });
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-sidebar">
