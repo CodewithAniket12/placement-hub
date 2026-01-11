@@ -211,11 +211,12 @@ export function AddCompanyModal({ isOpen, onClose }: AddCompanyModalProps) {
             </div>
             <div className="space-y-2">
               <Label>2nd POC (Backup)</Label>
-              <Select value={formData.poc_2nd} onValueChange={(v) => setFormData({ ...formData, poc_2nd: v })}>
+              <Select value={formData.poc_2nd || "none"} onValueChange={(v) => setFormData({ ...formData, poc_2nd: v === "none" ? "" : v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select backup POC" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
                   {POC_OPTIONS.filter(p => p !== formData.poc_1st).map((poc) => (
                     <SelectItem key={poc} value={poc}>{poc}</SelectItem>
                   ))}
