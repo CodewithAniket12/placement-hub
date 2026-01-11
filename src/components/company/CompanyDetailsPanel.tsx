@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Company, useUpdateCompanyNotes, useUpdateCompany, useDeleteCompany, useBlacklistCompany, useExtractAndSaveFormData } from "@/hooks/useCompanies";
 import { X, ExternalLink, Phone, Mail, CheckCircle2, Clock, Send, StickyNote, User, Users, Pencil, Trash2, Ban, Upload, FileText, Briefcase, MapPin, GraduationCap, FileCheck, Loader2, CalendarPlus } from "lucide-react";
 import { AddTaskModal } from "@/components/tasks/AddTaskModal";
+import { ContactsSection } from "@/components/company/ContactsSection";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -648,6 +649,11 @@ export function CompanyDetailsPanel({ company, isOpen, onClose, onSendEmail }: C
                   )}
                 </div>
               )}
+            </div>
+
+            {/* Multiple Contacts Section */}
+            <div className="mb-6">
+              <ContactsSection companyId={company.id} />
             </div>
 
             {/* Industry */}
