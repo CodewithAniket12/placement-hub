@@ -5,6 +5,14 @@ import { Download, FileText, Loader2, CheckCircle } from "lucide-react";
 import pptxgen from "pptxgenjs";
 import { toast } from "sonner";
 
+// Import screenshots and diagrams
+import loginScreenshot from "@/assets/screenshots/login-page.png";
+import dashboardMockup from "@/assets/screenshots/dashboard-mockup.png";
+import companiesMockup from "@/assets/screenshots/companies-mockup.png";
+import adminMockup from "@/assets/screenshots/admin-mockup.png";
+import erDiagram from "@/assets/diagrams/er-diagram.png";
+import useCaseDiagram from "@/assets/diagrams/use-case-diagram.png";
+
 export default function GeneratePPT() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
@@ -169,7 +177,18 @@ export default function GeneratePPT() {
         });
       });
 
-      // Slide 7: Technology Used
+      // Slide 7: Use Case Diagram
+      slide = pptx.addSlide();
+      slide.addText("Use Case Diagram", {
+        x: 0.5, y: 0.3, w: 9, h: 0.6,
+        fontSize: 28, bold: true, color: "1e3a8a"
+      });
+      slide.addImage({
+        path: useCaseDiagram,
+        x: 0.5, y: 1, w: 9, h: 4.2
+      });
+
+      // Slide 8: Technology Used
       slide = pptx.addSlide();
       slide.addText("Technology Used", {
         x: 0.5, y: 0.5, w: 9, h: 0.8,
@@ -194,7 +213,7 @@ export default function GeneratePPT() {
         });
       });
 
-      // Slide 8: Main Features
+      // Slide 9: Main Features Section
       slide = pptx.addSlide();
       slide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: "100%", h: "100%", fill: { color: "1e3a8a" } });
       slide.addText("Main Features", {
@@ -206,168 +225,247 @@ export default function GeneratePPT() {
         fontSize: 18, color: "93c5fd", align: "center"
       });
 
-      // Slide 9: Company Management
+      // Slide 10: Key Features Overview
       slide = pptx.addSlide();
-      slide.addText("Feature 1: Company Management", {
+      slide.addText("Key Features Overview", {
         x: 0.5, y: 0.5, w: 9, h: 0.8,
         fontSize: 28, bold: true, color: "1e3a8a"
       });
-      const companyFeatures = [
-        "Add new companies with all their details",
-        "Track status: Contacted, In Progress, Confirmed, etc.",
-        "Store HR contact information",
-        "Add multiple contacts per company",
-        "Keep notes about each company"
+      const features = [
+        { title: "Company Management", desc: "Add, track, and manage visiting companies" },
+        { title: "Task Management", desc: "Create tasks with priorities and deadlines" },
+        { title: "Scheduling", desc: "Schedule drives and block dates" },
+        { title: "Email System", desc: "AI-powered email templates and history" },
+        { title: "Admin Panel", desc: "User approval and activity monitoring" },
+        { title: "Dashboard", desc: "Statistics and quick overview" }
       ];
-      companyFeatures.forEach((item, i) => {
-        slide.addText(`• ${item}`, {
-          x: 0.7, y: 1.5 + i * 0.6, w: 8.5, h: 0.5,
-          fontSize: 16, color: "333333"
+      features.forEach((f, i) => {
+        const xPos = (i % 2) * 4.5 + 0.5;
+        const yPos = Math.floor(i / 2) * 1.3 + 1.4;
+        slide.addShape(pptx.ShapeType.roundRect, {
+          x: xPos, y: yPos, w: 4.2, h: 1,
+          fill: { color: "f0f9ff" },
+          line: { color: "3b82f6", width: 1 }
+        });
+        slide.addText(f.title, {
+          x: xPos + 0.15, y: yPos + 0.1, w: 4, h: 0.4,
+          fontSize: 13, bold: true, color: "1e3a8a"
+        });
+        slide.addText(f.desc, {
+          x: xPos + 0.15, y: yPos + 0.5, w: 4, h: 0.4,
+          fontSize: 10, color: "64748b"
         });
       });
 
-      // Slide 10: Task Management
-      slide = pptx.addSlide();
-      slide.addText("Feature 2: Task Management", {
-        x: 0.5, y: 0.5, w: 9, h: 0.8,
-        fontSize: 28, bold: true, color: "1e3a8a"
-      });
-      const taskFeatures = [
-        "Create tasks with due dates",
-        "Set priority: High, Medium, Low",
-        "Mark as Pending, In Progress, Completed",
-        "Link tasks to specific companies",
-        "Never miss an important deadline"
-      ];
-      taskFeatures.forEach((item, i) => {
-        slide.addText(`• ${item}`, {
-          x: 0.7, y: 1.5 + i * 0.6, w: 8.5, h: 0.5,
-          fontSize: 16, color: "333333"
-        });
-      });
-
-      // Slide 11: Scheduling & Email
-      slide = pptx.addSlide();
-      slide.addText("Feature 3: Scheduling & Email", {
-        x: 0.5, y: 0.5, w: 9, h: 0.8,
-        fontSize: 28, bold: true, color: "1e3a8a"
-      });
-      const scheduleFeatures = [
-        "Schedule campus drives on specific dates",
-        "Block dates for exams and holidays",
-        "Request dates for companies (needs admin approval)",
-        "Pre-made email templates",
-        "AI helps generate professional emails",
-        "All sent emails are saved for future reference"
-      ];
-      scheduleFeatures.forEach((item, i) => {
-        slide.addText(`• ${item}`, {
-          x: 0.7, y: 1.4 + i * 0.55, w: 8.5, h: 0.5,
-          fontSize: 15, color: "333333"
-        });
-      });
-
-      // Slide 12: Screenshot - Login
+      // Slide 11: Screenshot - Login
       slide = pptx.addSlide();
       slide.addText("Screenshot: Login Page", {
-        x: 0.5, y: 0.5, w: 9, h: 0.8,
+        x: 0.5, y: 0.3, w: 9, h: 0.6,
         fontSize: 28, bold: true, color: "1e3a8a"
       });
-      slide.addShape(pptx.ShapeType.roundRect, {
-        x: 1, y: 1.3, w: 8, h: 4,
-        fill: { color: "f1f5f9" },
-        line: { color: "cbd5e1", width: 2, dashType: "dash" }
+      slide.addImage({
+        path: loginScreenshot,
+        x: 1.5, y: 1, w: 7, h: 4.2
       });
-      slide.addText("📷 Add Login Page Screenshot Here", {
-        x: 1, y: 2.8, w: 8, h: 0.8,
-        fontSize: 18, color: "94a3b8", align: "center"
+      slide.addText("Secure login with username and password authentication", {
+        x: 0.5, y: 5.3, w: 9, h: 0.3,
+        fontSize: 11, color: "64748b", align: "center", italic: true
       });
 
-      // Slide 13: Screenshot - Dashboard
+      // Slide 12: Screenshot - Dashboard
       slide = pptx.addSlide();
       slide.addText("Screenshot: Dashboard", {
-        x: 0.5, y: 0.5, w: 9, h: 0.8,
+        x: 0.5, y: 0.3, w: 9, h: 0.6,
         fontSize: 28, bold: true, color: "1e3a8a"
       });
-      slide.addShape(pptx.ShapeType.roundRect, {
-        x: 1, y: 1.3, w: 8, h: 4,
-        fill: { color: "f1f5f9" },
-        line: { color: "cbd5e1", width: 2, dashType: "dash" }
+      slide.addImage({
+        path: dashboardMockup,
+        x: 0.5, y: 1, w: 9, h: 4.2
       });
-      slide.addText("📷 Add Dashboard Screenshot Here", {
-        x: 1, y: 2.8, w: 8, h: 0.8,
-        fontSize: 18, color: "94a3b8", align: "center"
+      slide.addText("Overview with statistics, charts, and quick actions", {
+        x: 0.5, y: 5.3, w: 9, h: 0.3,
+        fontSize: 11, color: "64748b", align: "center", italic: true
       });
 
-      // Slide 14: Screenshot - Companies
+      // Slide 13: Screenshot - Companies
       slide = pptx.addSlide();
       slide.addText("Screenshot: Companies Page", {
-        x: 0.5, y: 0.5, w: 9, h: 0.8,
+        x: 0.5, y: 0.3, w: 9, h: 0.6,
         fontSize: 28, bold: true, color: "1e3a8a"
       });
-      slide.addShape(pptx.ShapeType.roundRect, {
-        x: 1, y: 1.3, w: 8, h: 4,
-        fill: { color: "f1f5f9" },
-        line: { color: "cbd5e1", width: 2, dashType: "dash" }
+      slide.addImage({
+        path: companiesMockup,
+        x: 0.5, y: 1, w: 9, h: 4.2
       });
-      slide.addText("📷 Add Companies Page Screenshot Here", {
-        x: 1, y: 2.8, w: 8, h: 0.8,
-        fontSize: 18, color: "94a3b8", align: "center"
+      slide.addText("Manage all companies with status tracking and filters", {
+        x: 0.5, y: 5.3, w: 9, h: 0.3,
+        fontSize: 11, color: "64748b", align: "center", italic: true
       });
 
-      // Slide 15: Database Tables
+      // Slide 14: Screenshot - Admin Panel
       slide = pptx.addSlide();
-      slide.addText("How Data is Stored", {
+      slide.addText("Screenshot: Admin Panel", {
+        x: 0.5, y: 0.3, w: 9, h: 0.6,
+        fontSize: 28, bold: true, color: "1e3a8a"
+      });
+      slide.addImage({
+        path: adminMockup,
+        x: 0.5, y: 1, w: 9, h: 4.2
+      });
+      slide.addText("User management, blocked dates, and activity logs", {
+        x: 0.5, y: 5.3, w: 9, h: 0.3,
+        fontSize: 11, color: "64748b", align: "center", italic: true
+      });
+
+      // Slide 15: ER Diagram
+      slide = pptx.addSlide();
+      slide.addText("Entity Relationship Diagram", {
+        x: 0.5, y: 0.3, w: 9, h: 0.6,
+        fontSize: 28, bold: true, color: "1e3a8a"
+      });
+      slide.addImage({
+        path: erDiagram,
+        x: 0.3, y: 1, w: 9.4, h: 4.2
+      });
+      slide.addText("Database schema showing all entities and relationships", {
+        x: 0.5, y: 5.3, w: 9, h: 0.3,
+        fontSize: 11, color: "64748b", align: "center", italic: true
+      });
+
+      // Slide 16: Database Tables
+      slide = pptx.addSlide();
+      slide.addText("Database Tables", {
         x: 0.5, y: 0.5, w: 9, h: 0.8,
         fontSize: 28, bold: true, color: "1e3a8a"
       });
       const tables = [
-        { name: "Users", desc: "Login info" },
-        { name: "Companies", desc: "Company details" },
-        { name: "Tasks", desc: "To-do items" },
-        { name: "Drives", desc: "Campus drives" },
-        { name: "Emails", desc: "Email records" },
-        { name: "Blocked Dates", desc: "Holidays" }
+        { name: "profiles", desc: "User info & roles", fields: "id, user_id, display_name, status" },
+        { name: "companies", desc: "Company details", fields: "id, name, status, hr_email, package" },
+        { name: "tasks", desc: "To-do items", fields: "id, title, due_date, priority, status" },
+        { name: "campus_drives", desc: "Drive schedules", fields: "id, company_id, drive_date, venue" },
+        { name: "email_logs", desc: "Email records", fields: "id, subject, body, recipient, status" },
+        { name: "blocked_dates", desc: "Holidays/exams", fields: "id, start_date, end_date, reason" }
       ];
       tables.forEach((table, i) => {
-        const xPos = (i % 3) * 3 + 0.5;
-        const yPos = Math.floor(i / 3) * 1.5 + 1.6;
+        const yPos = 1.4 + i * 0.7;
         slide.addShape(pptx.ShapeType.roundRect, {
-          x: xPos, y: yPos, w: 2.7, h: 1.1,
-          fill: { color: "e0f2fe" },
-          line: { color: "3b82f6", width: 1 }
+          x: 0.5, y: yPos, w: 2.2, h: 0.55,
+          fill: { color: "1e3a8a" }
         });
-        slide.addText(`${table.name}\n${table.desc}`, {
-          x: xPos, y: yPos, w: 2.7, h: 1.1,
-          fontSize: 12, color: "1e3a8a", align: "center", valign: "middle"
+        slide.addText(table.name, {
+          x: 0.5, y: yPos, w: 2.2, h: 0.55,
+          fontSize: 11, bold: true, color: "FFFFFF", align: "center", valign: "middle"
         });
-      });
-      slide.addText("All tables are connected and data is kept secure", {
-        x: 0.5, y: 4.8, w: 9, h: 0.4,
-        fontSize: 12, color: "64748b", align: "center", italic: true
+        slide.addText(table.desc, {
+          x: 2.9, y: yPos, w: 2, h: 0.55,
+          fontSize: 11, color: "1e3a8a", valign: "middle"
+        });
+        slide.addText(table.fields, {
+          x: 5, y: yPos, w: 4.5, h: 0.55,
+          fontSize: 9, color: "64748b", valign: "middle"
+        });
       });
 
-      // Slide 16: Security
+      // Slide 17: Security Implementation
       slide = pptx.addSlide();
-      slide.addText("Security Features", {
+      slide.addText("Security Implementation", {
         x: 0.5, y: 0.5, w: 9, h: 0.8,
         fontSize: 28, bold: true, color: "1e3a8a"
       });
       const security = [
-        "Passwords are encrypted - nobody can see them",
-        "Only logged-in users can access the system",
-        "Admin must approve new users",
-        "Each user can only see their own data",
-        "All actions are logged for safety"
+        { title: "Password Encryption", desc: "All passwords hashed using bcrypt - impossible to read" },
+        { title: "JWT Authentication", desc: "Secure tokens for session management" },
+        { title: "Row Level Security (RLS)", desc: "Users can only access their own data" },
+        { title: "Role-Based Access", desc: "Admin and Coordinator have different permissions" },
+        { title: "Activity Logging", desc: "All actions recorded for audit trail" },
+        { title: "Input Validation", desc: "All user inputs sanitized to prevent attacks" }
       ];
       security.forEach((item, i) => {
-        slide.addText(`🔒 ${item}`, {
-          x: 0.7, y: 1.5 + i * 0.6, w: 8.5, h: 0.5,
-          fontSize: 16, color: "333333"
+        const yPos = 1.3 + i * 0.65;
+        slide.addText(`🔒 ${item.title}`, {
+          x: 0.7, y: yPos, w: 3.5, h: 0.55,
+          fontSize: 13, bold: true, color: "16a34a"
+        });
+        slide.addText(item.desc, {
+          x: 4.2, y: yPos, w: 5.3, h: 0.55,
+          fontSize: 11, color: "333333"
         });
       });
 
-      // Slide 17: Future Improvements
+      // Slide 18: Security Architecture
+      slide = pptx.addSlide();
+      slide.addText("Security Architecture", {
+        x: 0.5, y: 0.5, w: 9, h: 0.8,
+        fontSize: 28, bold: true, color: "1e3a8a"
+      });
+      // Authentication Flow
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: 0.5, y: 1.4, w: 2.5, h: 1,
+        fill: { color: "dbeafe" },
+        line: { color: "3b82f6", width: 2 }
+      });
+      slide.addText("User Login", {
+        x: 0.5, y: 1.4, w: 2.5, h: 1,
+        fontSize: 12, color: "1e3a8a", align: "center", valign: "middle"
+      });
+      slide.addText("→", { x: 3.1, y: 1.6, w: 0.5, h: 0.5, fontSize: 24, color: "3b82f6" });
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: 3.75, y: 1.4, w: 2.5, h: 1,
+        fill: { color: "dcfce7" },
+        line: { color: "16a34a", width: 2 }
+      });
+      slide.addText("Auth Server\nVerify Credentials", {
+        x: 3.75, y: 1.4, w: 2.5, h: 1,
+        fontSize: 10, color: "16a34a", align: "center", valign: "middle"
+      });
+      slide.addText("→", { x: 6.35, y: 1.6, w: 0.5, h: 0.5, fontSize: 24, color: "3b82f6" });
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: 7, y: 1.4, w: 2.5, h: 1,
+        fill: { color: "fef3c7" },
+        line: { color: "f59e0b", width: 2 }
+      });
+      slide.addText("JWT Token\nIssued", {
+        x: 7, y: 1.4, w: 2.5, h: 1,
+        fontSize: 10, color: "b45309", align: "center", valign: "middle"
+      });
+      
+      // Data Access Flow
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: 0.5, y: 3, w: 2.5, h: 1,
+        fill: { color: "fce7f3" },
+        line: { color: "db2777", width: 2 }
+      });
+      slide.addText("API Request", {
+        x: 0.5, y: 3, w: 2.5, h: 1,
+        fontSize: 12, color: "db2777", align: "center", valign: "middle"
+      });
+      slide.addText("→", { x: 3.1, y: 3.2, w: 0.5, h: 0.5, fontSize: 24, color: "3b82f6" });
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: 3.75, y: 3, w: 2.5, h: 1,
+        fill: { color: "e0e7ff" },
+        line: { color: "6366f1", width: 2 }
+      });
+      slide.addText("RLS Policy\nCheck", {
+        x: 3.75, y: 3, w: 2.5, h: 1,
+        fontSize: 10, color: "4f46e5", align: "center", valign: "middle"
+      });
+      slide.addText("→", { x: 6.35, y: 3.2, w: 0.5, h: 0.5, fontSize: 24, color: "3b82f6" });
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: 7, y: 3, w: 2.5, h: 1,
+        fill: { color: "dcfce7" },
+        line: { color: "16a34a", width: 2 }
+      });
+      slide.addText("Data Access\nGranted/Denied", {
+        x: 7, y: 3, w: 2.5, h: 1,
+        fontSize: 10, color: "16a34a", align: "center", valign: "middle"
+      });
+
+      slide.addText("All data access goes through multiple security layers", {
+        x: 0.5, y: 4.5, w: 9, h: 0.4,
+        fontSize: 12, color: "64748b", align: "center", italic: true
+      });
+
+      // Slide 19: Future Improvements
       slide = pptx.addSlide();
       slide.addText("Future Improvements", {
         x: 0.5, y: 0.5, w: 9, h: 0.8,
@@ -387,7 +485,7 @@ export default function GeneratePPT() {
         });
       });
 
-      // Slide 18: Conclusion
+      // Slide 20: Conclusion
       slide = pptx.addSlide();
       slide.addText("Conclusion", {
         x: 0.5, y: 0.5, w: 9, h: 0.8,
@@ -407,7 +505,7 @@ export default function GeneratePPT() {
         });
       });
 
-      // Slide 19: Thank You
+      // Slide 21: Thank You
       slide = pptx.addSlide();
       slide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: "100%", h: "100%", fill: { color: "1e3a8a" } });
       slide.addText("Thank You!", {
@@ -447,20 +545,28 @@ export default function GeneratePPT() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <h3 className="font-semibold text-blue-800 mb-2">Contains 19 slides:</h3>
+            <h3 className="font-semibold text-blue-800 mb-2">Contains 21 slides with:</h3>
             <ul className="text-sm text-blue-700 space-y-1">
               <li>• Title, Team & Introduction</li>
               <li>• Problem & Solution</li>
-              <li>• User Roles & Technology</li>
-              <li>• Features (Company, Task, Scheduling)</li>
-              <li>• Screenshots (3 placeholder slides)</li>
-              <li>• Database, Security & Future Scope</li>
+              <li>• Use Case Diagram</li>
+              <li>• Technology Stack</li>
+              <li>• Screenshots (Login, Dashboard, Companies, Admin)</li>
+              <li>• ER Diagram & Database Schema</li>
+              <li>• Security Implementation (2 slides)</li>
+              <li>• Future Scope & Conclusion</li>
             </ul>
           </div>
           
+          <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+            <p className="text-sm text-green-700">
+              ✓ Includes actual screenshots and diagrams
+            </p>
+          </div>
+
           <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
             <p className="text-sm text-amber-700">
-              📝 After download: Add screenshots and update team member names.
+              📝 After download: Update team member names in slide 2.
             </p>
           </div>
 
@@ -471,18 +577,18 @@ export default function GeneratePPT() {
           >
             {isGenerating ? (
               <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Generating...
               </>
             ) : isComplete ? (
               <>
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Download Again
+                <CheckCircle className="mr-2 h-5 w-5" />
+                Download Complete!
               </>
             ) : (
               <>
-                <Download className="w-5 h-5 mr-2" />
-                Download PPT
+                <Download className="mr-2 h-5 w-5" />
+                Generate & Download PPT
               </>
             )}
           </Button>
