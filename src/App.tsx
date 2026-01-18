@@ -16,6 +16,7 @@ import HomeRedirect from "./pages/HomeRedirect";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Pending from "./pages/Pending";
+import GeneratePPT from "./pages/GeneratePPT";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/pending" element={<Pending />} />
+            <Route path="/generate-ppt" element={<GeneratePPT />} />
             <Route
               element={
                 <ProtectedRoute>
