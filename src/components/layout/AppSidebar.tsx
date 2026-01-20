@@ -10,6 +10,7 @@ const navItems = [
   { title: "Admin Panel", url: "/admin", icon: Shield, adminOnly: true },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, coordinatorOnly: true },
   { title: "All Companies", url: "/companies", icon: Building2 },
+  { title: "Scheduled Drives", url: "/scheduled-drives", icon: CalendarCheck, coordinatorOnly: true },
   { title: "Tasks", url: "/tasks", icon: ListTodo, coordinatorOnly: true },
   { title: "Scheduling", url: "/scheduling", icon: CalendarCheck, adminOnly: true },
   { title: "Email History", url: "/email-history", icon: Mail },
